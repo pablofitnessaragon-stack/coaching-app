@@ -31,14 +31,20 @@ comentarios del código y documentación están en **español**. Unidades: kg, c
   (`RITMO_POR_DEFECTO` en `peso.ts`).
 - **RGPD:** consentimiento obligatorio y versionado (`src/lib/consentimiento.ts`), exportación JSON
   y borrado en cascada desde la ficha.
+- **Reparto de funciones:** la calculadora y el creador de dietas son SOLO del entrenador. El
+  cliente (portal) solo ve el resultado: progreso, objetivos semanales, macros, dieta y
+  suplementación que le asigna el entrenador, y hace su seguimiento (peso, check-in, diario de comidas).
 - **Datos de ejemplo:** 4 clientes ficticios (`src/lib/ejemplos.ts`), marcados `es_ejemplo`.
 
 ## Fases
 
 1. ✅ Fichas + calculadora + peso con gráfica + historial (esta).
-2. Base de alimentos (BEDCA, USDA, Open Food Facts) + recetas + creador de dietas + PDF con marca.
-3. Vista semanal con ciclado + medidas + check-ins + dashboard + portal sencillo.
-4. Portal completo (check-in, fotos privadas), alertas, sugerencias de ajuste, rutinas.
+2. Base de alimentos (BEDCA, USDA, Open Food Facts) + medidas caseras por alimento (puñado,
+   pulgar, palma, puño, cucharada, unidad → gramos aproximados) + recetas + creador de dietas + PDF.
+3. Vista semanal con ciclado + medidas + check-ins + suplementación por cliente + dashboard +
+   portal sencillo (semana, objetivos, dieta, suplementos, apuntar peso).
+4. Portal completo (check-in, fotos privadas, **diario de comidas** en gramos o medidas caseras con
+   macros calculados frente al objetivo del día), alertas, sugerencias de ajuste, rutinas.
 
 ## Cómo trabajar aquí
 
