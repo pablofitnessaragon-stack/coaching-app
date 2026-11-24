@@ -1,26 +1,29 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Colores de la marca: cambiar aquí para toda la app */
+@theme {
+  --color-marca-50: #ecfdf5;
+  --color-marca-100: #d1fae5;
+  --color-marca-500: #10b981;
+  --color-marca-600: #059669;
+  --color-marca-700: #047857;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #f6f7f9;
+  color: #0f172a;
+}
+
+/* Piezas reutilizables */
+@layer components {
+  .tarjeta { @apply rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5; }
+  .etiqueta { @apply mb-1 block text-sm font-medium text-slate-700; }
+  .campo { @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base outline-none focus:border-marca-500 focus:ring-2 focus:ring-marca-100 sm:text-sm; }
+  .boton { @apply inline-flex items-center justify-center gap-2 rounded-lg bg-marca-600 px-4 py-2 text-sm font-semibold text-white hover:bg-marca-700 disabled:opacity-50; }
+  .boton-sec { @apply inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50; }
+  .boton-peligro { @apply inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50; }
+  .titulo { @apply text-xl font-bold tracking-tight sm:text-2xl; }
+  .subtitulo { @apply text-base font-semibold; }
+  .ayuda { @apply text-xs text-slate-500; }
 }
