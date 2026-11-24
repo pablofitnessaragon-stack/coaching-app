@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  // Todas las páginas muestran datos privados del usuario conectado, así que se
+  // generan siempre al momento (sin caché de componentes).
+  cacheComponents: false,
   turbopack: {
     rules: {
       "*.css": {

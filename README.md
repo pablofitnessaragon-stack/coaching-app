@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Coaching · herramienta para entrenador personal
 
-## Getting Started
+App web (funciona en ordenador y móvil) para gestionar clientes de nutrición y
+entrenamiento: fichas, calculadora nutricional transparente con ciclado
+entreno/descanso, registro de peso con gráficas e historial de ajustes.
 
-First, run the development server:
+**Estado:** fase 1 terminada (ver [`CLAUDE.md`](CLAUDE.md) para el plan completo).
+
+## Qué hay en la fase 1
+
+- **Clientes:** lista con estado (en ritmo, progreso lento, días sin pesarse) y ficha completa
+  (datos, objetivo, actividad, preferencias, alergias, notas).
+- **Calculadora:** Mifflin-St Jeor, Harris-Benedict y Katch-McArdle; gasto total por factor o
+  desglosado (vida diaria + pasos + entreno); déficit/superávit en % o kcal; macros en g/kg o %;
+  objetivos distintos para día de entreno, descanso e intenso; fibra, agua y micronutrientes de
+  referencia. Cada número enseña su fórmula y se puede sobrescribir a mano.
+- **Progreso:** peso diario, media móvil de 7 días, medias semanales (lunes-domingo) y comparación
+  con el ritmo objetivo.
+- **Historial:** cada cambio de plan queda guardado con fecha y motivo.
+- **RGPD:** consentimiento obligatorio, datos en la UE, descarga de todos los datos de un cliente
+  y borrado completo.
+- **Datos de ejemplo:** Ajustes → «Cargar clientes de ejemplo» (4 clientes ficticios).
+
+## Arrancarlo en tu ordenador (desarrollo)
+
+Necesitas [Node.js 22](https://nodejs.org) y [Docker](https://www.docker.com/) (para la base de datos local).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npx supabase start      # base de datos local (la primera vez tarda unos minutos)
+npx supabase db reset   # crea las tablas y el usuario de prueba
+cp .env.example .env.local   # y pon la URL y clave que muestra "supabase start"
+npm run dev             # abre http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Usuario de prueba local: `entrenador@ejemplo.com` / `demo1234`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Tests
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm test
+```
 
-## Learn More
+Comprueban todas las fórmulas con ejemplos calculados a mano (las cuentas están en los comentarios de
+`src/lib/nutrition/__tests__/formulas.test.ts`).
 
-To learn more about Next.js, take a look at the following resources:
+## Publicarlo en internet
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Ver [`docs/PUESTA_EN_MARCHA.md`](docs/PUESTA_EN_MARCHA.md): Supabase (Frankfurt) + Vercel, paso a paso.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Estructura
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Carpeta | Qué hay |
+| --- | --- |
+| `src/lib/nutrition/` | Todas las fórmulas (sin pantallas), con sus tests |
+| `src/app/(app)/` | Las pantallas de la app |
+| `src/components/` | Piezas de pantalla reutilizables (calculadora, gráfica, formularios) |
+| `supabase/migrations/` | Tablas y reglas de seguridad de la base de datos |
