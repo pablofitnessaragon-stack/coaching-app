@@ -3,6 +3,7 @@ import {
   TODAS_LAS_PREGUNTAS,
   avisosSalud,
   fichaDesdeRespuestas,
+  grasaDesdeRespuestas,
   medidasDesdeRespuestas,
   textoRespuesta,
   validarRespuestas,
@@ -115,5 +116,37 @@ describe("medidasDesdeRespuestas", () => {
   it("pasa solo las que puso el cliente", () => {
     const r = validarRespuestas({ ...minimo, cintura_cm: "78,5", muslo_cm: "55" });
     expect(r.ok && medidasDesdeRespuestas(r.respuestas)).toEqual({ cintura_cm: 78.5, muslo_cm: 55 });
+  });
+  it("incluye el % de báscula con su método", () => {
+    const r = validarRespuestas({ ...minimo, bascula_grasa: "dexa", grasa_medida_pct: "24,5" });
+    expect(r.ok && medidasDesdeRespuestas(r.respuestas)).toEqual({ grasa_pct: 24.5, grasa_metodo: "dexa" });
+  });
+});
+
+describe("% de grasa desde el formulario", () => {
+  it("sin báscula y con cuello, cintura y cadera: lo estima con la fórmula de la Marina", () => {
+    // Mujer de 165 cm con cintura 72, cadera 98 y cuello 33 → 26,92 % (cuenta en grasa.test.ts)
+    const r = validarRespuestas({ ...minimo, cuello_cm: "33", cintura_cm: "72", cadera_cm: "98", bascula_grasa: "no" });
+    if (!r.ok) throw new Error("debería ser válido");
+    const g = grasaDesdeRespuestas(r.respuestas)!;
+    expect(g.valor).toBeCloseTo(26.92, 2);
+    expect(g.origen).toMatch(/Marina/);
+    // Y pasa a la ficha redondeado a un decimal
+    expect(fichaDesdeRespuestas(r.respuestas).grasa_inicial_pct).toBe(26.9);
+  });
+  it("si se ha medido con báscula, manda la báscula", () => {
+    const r = validarRespuestas({ ...minimo, cuello_cm: "33", cintura_cm: "72", cadera_cm: "98", bascula_grasa: "bioimpedancia", grasa_medida_pct: "28" });
+    if (!r.ok) throw new Error("debería ser válido");
+    expect(grasaDesdeRespuestas(r.respuestas)).toEqual({ valor: 28, origen: "medido con báscula de bioimpedancia" });
+  });
+  it("el % de báscula solo se guarda si dijo que puede medirse", () => {
+    const r = validarRespuestas({ ...minimo, bascula_grasa: "no", grasa_medida_pct: "28" });
+    expect(r.ok && "grasa_medida_pct" in r.respuestas).toBe(false);
+  });
+  it("sin medidas suficientes no hay % (la ficha queda vacía)", () => {
+    const r = validarRespuestas({ ...minimo, cintura_cm: "72" });
+    if (!r.ok) throw new Error("debería ser válido");
+    expect(grasaDesdeRespuestas(r.respuestas)).toBeNull();
+    expect("grasa_inicial_pct" in fichaDesdeRespuestas(r.respuestas)).toBe(false);
   });
 });

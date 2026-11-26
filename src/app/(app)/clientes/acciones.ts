@@ -241,11 +241,14 @@ const medidaOpcional = (min: number, max: number) =>
 
 const esquemaMedidas = z.object({
   fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  cuello_cm: medidaOpcional(20, 70),
   cintura_cm: medidaOpcional(40, 200),
   cadera_cm: medidaOpcional(50, 200),
   pecho_cm: medidaOpcional(50, 200),
   brazo_cm: medidaOpcional(15, 70),
   muslo_cm: medidaOpcional(25, 100),
+  grasa_pct: medidaOpcional(3, 60),
+  grasa_metodo: z.preprocess(vacioANull, z.enum(["bioimpedancia", "dexa", "plicometro", "otro"]).nullable()),
   nota: z.preprocess(vacioANull, z.string().nullable()),
 });
 
@@ -253,7 +256,12 @@ const esquemaMedidas = z.object({
 export async function registrarMedidas(clienteId: string, _: EstadoFormulario, fd: FormData): Promise<EstadoFormulario> {
   const r = esquemaMedidas.safeParse(Object.fromEntries(fd.entries()));
   if (!r.success) return { error: "Revisa los valores: alguna medida está fuera de lo normal." };
-  if (CLAVES_MEDIDAS.every((c) => r.data[c] == null)) return { error: "Escribe al menos una medida." };
+  if (CLAVES_MEDIDAS.every((c) => r.data[c] == null) && r.data.grasa_pct == null) {
+    return { error: "Escribe al menos una medida." };
+  }
+  // El método solo tiene sentido si hay % de grasa medido
+  if (r.data.grasa_pct == null) r.data.grasa_metodo = null;
+  else r.data.grasa_metodo ??= "otro";
   const supabase = await crearClienteServidor();
   const { error } = await supabase.from("medidas").upsert({ cliente_id: clienteId, ...r.data }, { onConflict: "cliente_id,fecha" });
   if (error) return { error: "No se pudo guardar: " + error.message };

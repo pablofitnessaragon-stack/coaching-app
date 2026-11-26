@@ -1,4 +1,5 @@
-import { SECCIONES, CLAVES_SOLO_CUESTIONARIO, avisosSalud, textoRespuesta, type Respuestas } from "@/lib/formulario-alta";
+import { SECCIONES, CLAVES_SOLO_CUESTIONARIO, avisosSalud, grasaDesdeRespuestas, textoRespuesta, type Respuestas } from "@/lib/formulario-alta";
+import { fmtNum } from "@/components/ui";
 
 /**
  * Respuestas del formulario de alta, ordenadas por secciones. Con
@@ -6,6 +7,7 @@ import { SECCIONES, CLAVES_SOLO_CUESTIONARIO, avisosSalud, textoRespuesta, type 
  */
 export default function ResumenAlta({ respuestas, soloExtra = false }: { respuestas: Respuestas; soloExtra?: boolean }) {
   const avisos = avisosSalud(respuestas);
+  const grasa = soloExtra ? null : grasaDesdeRespuestas(respuestas);
   return (
     <div className="space-y-4">
       {avisos.length > 0 && (
@@ -14,6 +16,18 @@ export default function ResumenAlta({ respuestas, soloExtra = false }: { respues
             <li key={a}>⚠️ {a}</li>
           ))}
         </ul>
+      )}
+      {grasa && (
+        <div className="rounded-xl border border-marca-500/40 bg-marca-50/50 p-3 text-sm">
+          <b>% de grasa: {fmtNum(grasa.valor, 1)} %</b> <span className="text-slate-600">({grasa.origen})</span>
+          {grasa.calculo && (
+            <details className="mt-1 text-xs text-slate-600">
+              <summary className="cursor-pointer">Ver el cálculo</summary>
+              <p className="mt-1 font-mono">{grasa.calculo.formula}</p>
+              <ul className="mt-1 space-y-0.5 font-mono">{grasa.calculo.pasos.map((p) => <li key={p}>{p}</li>)}</ul>
+            </details>
+          )}
+        </div>
       )}
       {SECCIONES.map((s) => {
         const filas = s.preguntas
