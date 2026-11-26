@@ -1,5 +1,6 @@
 import { obtenerCliente, obtenerMedidas, obtenerPesos, type Medida } from "@/lib/datos";
 import FormMedidas from "@/components/FormMedidas";
+import { faltanParaGrasaMarina, grasaMarina } from "@/lib/nutrition/grasa";
 import { evaluarRitmo, mediasSemanales, RITMO_POR_DEFECTO } from "@/lib/nutrition/peso";
 import { NOMBRE_OBJETIVO } from "@/lib/nutrition/tipos";
 import GraficaPeso from "@/components/GraficaPeso";
@@ -85,6 +86,7 @@ export default async function Progreso({ params }: PageProps<"/clientes/[id]/pro
           <h2 className="subtitulo">Medidas</h2>
           <p className="ayuda">Opcionales: apúntalas cuando las tengas (tú o el cliente). Basta con una.</p>
         </div>
+        <ResumenGrasa medidas={medidas} sexo={c.sexo} alturaCm={c.altura_cm} />
         <FormMedidas accion={registrarMedidas.bind(null, id)} hoy={hoyIso()} />
         {medidas.length === 0 ? (
           <p className="text-sm text-slate-500">Todavía no hay medidas.</p>
@@ -95,6 +97,8 @@ export default async function Progreso({ params }: PageProps<"/clientes/[id]/pro
                 <tr className="text-left text-xs uppercase tracking-wide text-slate-500">
                   <th className="py-2 font-medium">Fecha</th>
                   {COLUMNAS_MEDIDA.map(([, t]) => <th key={t} className="py-2 text-right font-medium">{t}</th>)}
+                  <th className="py-2 text-right font-medium" title="Medido con báscula, DEXA...">% grasa</th>
+                  <th className="py-2 text-right font-medium" title="Estimado con la fórmula de la Marina">% estimado</th>
                   <th className="py-2 pl-3 font-medium">Nota</th>
                   <th />
                 </tr>
@@ -108,6 +112,15 @@ export default async function Progreso({ params }: PageProps<"/clientes/[id]/pro
                         {m[clave] == null ? "—" : <><b>{fmtNum(m[clave], 1)}</b> <CambioMedida actual={m[clave]} primera={primeraMedida(medidas, clave)} /></>}
                       </td>
                     ))}
+                    <td className="py-2 text-right whitespace-nowrap">
+                      {m.grasa_pct == null ? "—" : <><b>{fmtNum(m.grasa_pct, 1)} %</b> <span className="text-xs text-slate-500">{NOMBRE_METODO[m.grasa_metodo ?? "otro"]}</span></>}
+                    </td>
+                    <td className="py-2 text-right whitespace-nowrap">
+                      {(() => {
+                        const g = grasaMarina({ sexo: c.sexo, alturaCm: c.altura_cm, cuelloCm: m.cuello_cm, cinturaCm: m.cintura_cm, caderaCm: m.cadera_cm });
+                        return g ? <b>{fmtNum(g.valor, 1)} %</b> : "—";
+                      })()}
+                    </td>
                     <td className="py-2 pl-3 text-slate-500">{m.nota}</td>
                     <td className="py-2 text-right">
                       <form action={borrarMedida.bind(null, id, m.id)}>
@@ -127,6 +140,7 @@ export default async function Progreso({ params }: PageProps<"/clientes/[id]/pro
 }
 
 const COLUMNAS_MEDIDA = [
+  ["cuello_cm", "Cuello"],
   ["cintura_cm", "Cintura"],
   ["cadera_cm", "Cadera"],
   ["pecho_cm", "Pecho"],
@@ -145,4 +159,53 @@ function CambioMedida({ actual, primera }: { actual: number; primera: number | n
   if (primera == null || actual === primera) return null;
   const d = actual - primera;
   return <span className="text-xs text-slate-500">({d > 0 ? "+" : "−"}{fmtNum(Math.abs(d), 1)})</span>;
+}
+
+const NOMBRE_METODO: Record<string, string> = {
+  bioimpedancia: "bioimp.",
+  dexa: "DEXA",
+  plicometro: "plicóm.",
+  otro: "",
+};
+
+/** % de grasa más reciente: el medido (báscula/DEXA) y el estimado con la fórmula de la Marina. */
+function ResumenGrasa({ medidas, sexo, alturaCm }: { medidas: Medida[]; sexo: "hombre" | "mujer"; alturaCm: number }) {
+  const ultimaMedida = [...medidas].reverse().find((m) => m.grasa_pct != null);
+  const conCinta = [...medidas].reverse().find((m) => grasaMarina({ sexo, alturaCm, cuelloCm: m.cuello_cm, cinturaCm: m.cintura_cm, caderaCm: m.cadera_cm }));
+  const estimado = conCinta
+    ? grasaMarina({ sexo, alturaCm, cuelloCm: conCinta.cuello_cm, cinturaCm: conCinta.cintura_cm, caderaCm: conCinta.cadera_cm })
+    : null;
+  const faltan = faltanParaGrasaMarina({ sexo, alturaCm });
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <div className="rounded-xl border border-slate-200 p-3">
+        <div className="text-xs font-medium uppercase tracking-wide text-slate-500">% grasa estimado (fórmula de la Marina)</div>
+        {estimado && conCinta ? (
+          <>
+            <div className="text-xl font-bold">{fmtNum(estimado.valor, 1)} %</div>
+            <div className="ayuda">Con las medidas del {fmtFecha(conCinta.fecha)}</div>
+            <details className="mt-1 text-xs text-slate-600">
+              <summary className="cursor-pointer">Ver el cálculo</summary>
+              <p className="mt-1 font-mono">{estimado.formula}</p>
+              <ul className="mt-1 space-y-0.5 font-mono">{estimado.pasos.map((p) => <li key={p}>{p}</li>)}</ul>
+              <p className="mt-1">Es una estimación (±3-4 puntos).</p>
+            </details>
+          </>
+        ) : (
+          <p className="text-sm text-slate-500">Hace falta apuntar {faltan.join(", ")} el mismo día para calcularlo.</p>
+        )}
+      </div>
+      <div className="rounded-xl border border-slate-200 p-3">
+        <div className="text-xs font-medium uppercase tracking-wide text-slate-500">% grasa medido (báscula, DEXA...)</div>
+        {ultimaMedida ? (
+          <>
+            <div className="text-xl font-bold">{fmtNum(ultimaMedida.grasa_pct!, 1)} %</div>
+            <div className="ayuda">{fmtFecha(ultimaMedida.fecha)}{ultimaMedida.grasa_metodo && ultimaMedida.grasa_metodo !== "otro" ? ` · ${ultimaMedida.grasa_metodo === "dexa" ? "DEXA" : ultimaMedida.grasa_metodo === "plicometro" ? "plicómetro" : "bioimpedancia"}` : ""}</div>
+          </>
+        ) : (
+          <p className="text-sm text-slate-500">Sin datos. Si se mide en su gimnasio, apúntalo aquí.</p>
+        )}
+      </div>
+    </div>
+  );
 }

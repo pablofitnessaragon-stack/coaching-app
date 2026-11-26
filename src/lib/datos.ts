@@ -88,11 +88,14 @@ export interface FormularioAlta {
 export interface Medida {
   id: string;
   fecha: string;
+  cuello_cm: number | null;
   cintura_cm: number | null;
   cadera_cm: number | null;
   pecho_cm: number | null;
   brazo_cm: number | null;
   muslo_cm: number | null;
+  grasa_pct: number | null;
+  grasa_metodo: string | null;
   nota: string | null;
 }
 
@@ -198,8 +201,8 @@ export async function obtenerMedidas(clienteId: string): Promise<Medida[]> {
   const supabase = await crearClienteServidor();
   const { data } = await supabase
     .from("medidas")
-    .select("id, fecha, cintura_cm, cadera_cm, pecho_cm, brazo_cm, muslo_cm, nota")
+    .select("id, fecha, cuello_cm, cintura_cm, cadera_cm, pecho_cm, brazo_cm, muslo_cm, grasa_pct, grasa_metodo, nota")
     .eq("cliente_id", clienteId)
     .order("fecha");
-  return ((data as Medida[]) ?? []).map((m) => num(m, ["cintura_cm", "cadera_cm", "pecho_cm", "brazo_cm", "muslo_cm"]));
+  return ((data as Medida[]) ?? []).map((m) => num(m, ["cuello_cm", "cintura_cm", "cadera_cm", "pecho_cm", "brazo_cm", "muslo_cm", "grasa_pct"]));
 }

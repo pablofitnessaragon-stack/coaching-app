@@ -12,6 +12,8 @@
  * Sin dependencias de pantalla ni de base de datos: se puede probar con tests.
  */
 import { calcularEdad } from "./nutrition/edad";
+import { grasaMarina } from "./nutrition/grasa";
+import type { Calculo } from "./nutrition/tipos";
 
 export type TipoPregunta =
   | "texto"
@@ -39,8 +41,8 @@ export interface Pregunta {
   unidad?: string;
   /** Para "escala": qué significa el 1 y el 5 */
   extremos?: readonly [string, string];
-  /** Solo se pregunta si otra respuesta tiene cierto valor */
-  soloSi?: { clave: string; valor: string };
+  /** Solo se pregunta si otra respuesta tiene cierto valor (o uno de varios) */
+  soloSi?: { clave: string; valor: string | readonly string[] };
   /** Ocupa todo el ancho en pantallas grandes */
   ancho?: boolean;
 }
@@ -89,16 +91,6 @@ export const SECCIONES: Seccion[] = [
         obligatoria: true,
         ayuda: "Mejor en ayunas, después de ir al baño.",
       },
-      {
-        clave: "grasa_inicial_pct",
-        pregunta: "% de grasa corporal",
-        tipo: "numero",
-        unidad: "%",
-        min: 3,
-        max: 60,
-        paso: 0.1,
-        ayuda: "Solo si te lo han medido (báscula de bioimpedancia, plicómetro, DEXA...). Si no, déjalo vacío.",
-      },
       { clave: "profesion", pregunta: "¿A qué te dedicas?", tipo: "texto" },
     ],
   },
@@ -142,13 +134,45 @@ export const SECCIONES: Seccion[] = [
     id: "medidas",
     titulo: "Medidas iniciales (opcional)",
     intro:
-      "Si tienes una cinta métrica a mano, mide sin apretar y por la mañana. Si no, no pasa nada: déjalo vacío y las tomamos más adelante.",
+      "Si tienes una cinta métrica a mano, mide sin apretar y por la mañana. Con el cuello, la cintura y (en mujeres) la cadera calculo tu % de grasa. Si no puedes medirte, no pasa nada: déjalo vacío y lo hacemos más adelante.",
     preguntas: [
-      { clave: "cintura_cm", pregunta: "Cintura", tipo: "numero", unidad: "cm", min: 40, max: 200, paso: 0.5, ayuda: "A la altura del ombligo." },
+      { clave: "cuello_cm", pregunta: "Cuello", tipo: "numero", unidad: "cm", min: 20, max: 70, paso: 0.5, ayuda: "Justo por debajo de la nuez." },
+      {
+        clave: "cintura_cm",
+        pregunta: "Cintura",
+        tipo: "numero",
+        unidad: "cm",
+        min: 40,
+        max: 200,
+        paso: 0.5,
+        ayuda: "Hombres: a la altura del ombligo. Mujeres: en la parte más estrecha.",
+      },
       { clave: "cadera_cm", pregunta: "Cadera", tipo: "numero", unidad: "cm", min: 50, max: 200, paso: 0.5, ayuda: "En la parte más ancha del glúteo." },
       { clave: "pecho_cm", pregunta: "Pecho", tipo: "numero", unidad: "cm", min: 50, max: 200, paso: 0.5, ayuda: "A la altura de los pezones." },
       { clave: "brazo_cm", pregunta: "Brazo", tipo: "numero", unidad: "cm", min: 15, max: 70, paso: 0.5, ayuda: "Mitad del brazo, relajado." },
       { clave: "muslo_cm", pregunta: "Muslo", tipo: "numero", unidad: "cm", min: 25, max: 100, paso: 0.5, ayuda: "Mitad del muslo." },
+      {
+        clave: "bascula_grasa",
+        pregunta: "¿Puedes medirte en una báscula de bioimpedancia o con DEXA (en tu gimnasio, farmacia...)?",
+        tipo: "opcion",
+        ancho: true,
+        opciones: [
+          ["bioimpedancia", "Sí, báscula de bioimpedancia"],
+          ["dexa", "Sí, DEXA"],
+          ["no", "No"],
+        ],
+      },
+      {
+        clave: "grasa_medida_pct",
+        pregunta: "% de grasa que te da",
+        tipo: "numero",
+        unidad: "%",
+        min: 3,
+        max: 60,
+        paso: 0.1,
+        soloSi: { clave: "bascula_grasa", valor: ["bioimpedancia", "dexa"] },
+        ayuda: "Pon el último resultado. Si aún no te has medido, déjalo vacío y me lo pasas cuando lo hagas.",
+      },
     ],
   },
   {
@@ -346,7 +370,8 @@ const MAX_TEXTO = 2000;
 export function seAplica(p: Pregunta, valores: Record<string, unknown>): boolean {
   if (!p.soloSi) return true;
   const v = valores[p.soloSi.clave];
-  return Array.isArray(v) ? v.includes(p.soloSi.valor) : v === p.soloSi.valor;
+  const buscados: readonly string[] = typeof p.soloSi.valor === "string" ? [p.soloSi.valor] : p.soloSi.valor;
+  return Array.isArray(v) ? v.some((x) => buscados.includes(x)) : typeof v === "string" && buscados.includes(v);
 }
 
 /**
@@ -445,7 +470,6 @@ const CAMPOS_FICHA = [
   "fecha_nacimiento",
   "altura_cm",
   "peso_inicial_kg",
-  "grasa_inicial_pct",
   "objetivo",
   "estilo_vida",
   "pasos_diarios",
@@ -473,23 +497,63 @@ export function fichaDesdeRespuestas(r: Respuestas): Record<string, string | num
     r.horarios_comidas && `Comidas: ${r.horarios_comidas}`,
   ].filter(Boolean);
   if (horarios.length) ficha.horarios = horarios.join("\n");
+  const grasa = grasaDesdeRespuestas(r);
+  if (grasa) ficha.grasa_inicial_pct = Math.round(grasa.valor * 10) / 10;
   return ficha;
 }
 
+const NOMBRE_METODO: Record<string, string> = { bioimpedancia: "báscula de bioimpedancia", dexa: "DEXA" };
+
+/**
+ * % de grasa a partir de las respuestas: si se ha medido con báscula o DEXA
+ * se usa ese dato; si no, se estima con la fórmula de la Marina (cuello,
+ * cintura, cadera y altura). Null si no hay datos suficientes.
+ */
+export function grasaDesdeRespuestas(r: Respuestas): { valor: number; origen: string; calculo?: Calculo } | null {
+  if (typeof r.grasa_medida_pct === "number") {
+    return { valor: r.grasa_medida_pct, origen: `medido con ${NOMBRE_METODO[String(r.bascula_grasa)] ?? "báscula"}` };
+  }
+  if (r.sexo !== "hombre" && r.sexo !== "mujer") return null;
+  const n = (c: string) => (typeof r[c] === "number" ? (r[c] as number) : null);
+  const calculo = grasaMarina({
+    sexo: r.sexo,
+    alturaCm: n("altura_cm") ?? 0,
+    cuelloCm: n("cuello_cm"),
+    cinturaCm: n("cintura_cm"),
+    caderaCm: n("cadera_cm"),
+  });
+  return calculo ? { valor: calculo.valor, origen: "estimado con la fórmula de la Marina", calculo } : null;
+}
+
 /** Medidas del formulario que pasan al registro de medidas (tabla `medidas`). */
-export const CLAVES_MEDIDAS = ["cintura_cm", "cadera_cm", "pecho_cm", "brazo_cm", "muslo_cm"] as const;
+export const CLAVES_MEDIDAS = ["cuello_cm", "cintura_cm", "cadera_cm", "pecho_cm", "brazo_cm", "muslo_cm"] as const;
 export type ClaveMedida = (typeof CLAVES_MEDIDAS)[number];
 
+export interface MedidasAlta extends Partial<Record<ClaveMedida, number>> {
+  grasa_pct?: number;
+  grasa_metodo?: string;
+}
+
 /** Medidas que puso el cliente en el formulario, o null si no puso ninguna. */
-export function medidasDesdeRespuestas(r: Respuestas): Partial<Record<ClaveMedida, number>> | null {
-  const m: Partial<Record<ClaveMedida, number>> = {};
+export function medidasDesdeRespuestas(r: Respuestas): MedidasAlta | null {
+  const m: MedidasAlta = {};
   for (const c of CLAVES_MEDIDAS) if (typeof r[c] === "number") m[c] = r[c] as number;
+  if (typeof r.grasa_medida_pct === "number") {
+    m.grasa_pct = r.grasa_medida_pct;
+    m.grasa_metodo = String(r.bascula_grasa);
+  }
   return Object.keys(m).length > 0 ? m : null;
 }
 
 /** Preguntas que NO van a la ficha: se muestran aparte como cuestionario. */
 export const CLAVES_SOLO_CUESTIONARIO = new Set(
-  TODAS_LAS_PREGUNTAS.map((p) => p.clave).filter((c) => !(CAMPOS_FICHA as readonly string[]).includes(c) && !(CLAVES_MEDIDAS as readonly string[]).includes(c)),
+  TODAS_LAS_PREGUNTAS.map((p) => p.clave).filter(
+    (c) =>
+      !(CAMPOS_FICHA as readonly string[]).includes(c) &&
+      !(CLAVES_MEDIDAS as readonly string[]).includes(c) &&
+      c !== "bascula_grasa" &&
+      c !== "grasa_medida_pct",
+  ),
 );
 
 /** Avisos para el entrenador a partir de las respuestas de salud. */

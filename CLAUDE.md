@@ -39,7 +39,9 @@ comentarios del código y documentación están en **español**. Unidades: kg, c
   (pantalla, validación y resumen salen de ahí). Las respuestas van a `formularios_alta`; el cliente
   anónimo solo puede usar `ver_formulario_alta` y `enviar_formulario_alta`. El entrenador revisa y
   crea la ficha con un clic; lo que no cabe en la ficha se muestra como "Cuestionario inicial".
-- **Medidas:** tabla `medidas` (por fecha, todas opcionales, basta una). Las apunta el entrenador en Progreso
+- **Medidas:** tabla `medidas` (por fecha, todas opcionales, basta una; incluye cuello y % de grasa medido
+  con báscula/DEXA). El % de grasa se ESTIMA con la fórmula de la Marina (`nutrition/grasa.ts`, cuello +
+  cintura + cadera en mujeres + altura) al mostrarlo, no se guarda. En el alta, la báscula manda sobre la estimación. Las apunta el entrenador en Progreso
   o el cliente (portal, políticas ya puestas); las del formulario de alta pasan aquí al crear la ficha.
 - **Datos de ejemplo:** 4 clientes ficticios (`src/lib/ejemplos.ts`), marcados `es_ejemplo`.
 

@@ -7,3 +7,4 @@ export * from "./objetivos";
 export * from "./micronutrientes";
 export * from "./peso";
 export * from "./plan";
+export * from "./grasa";
