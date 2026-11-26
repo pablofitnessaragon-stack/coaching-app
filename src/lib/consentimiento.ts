@@ -12,3 +12,15 @@ export const TEXTO_CONSENTIMIENTO =
   "(peso, medidas, alimentación, actividad y, en su caso, fotos de progreso) con la única finalidad " +
   "de prestarle el servicio de asesoramiento. Puede pedir en cualquier momento una copia de sus datos " +
   "o su eliminación.";
+
+/**
+ * Texto que acepta el PROPIO cliente al enviar el formulario de alta (en
+ * primera persona). Misma regla: si cambias el texto, sube la versión.
+ */
+export const TEXTO_CONSENTIMIENTO_CLIENTE_VERSION = "v1-2026-11-cliente";
+
+export const TEXTO_CONSENTIMIENTO_CLIENTE =
+  "Doy mi consentimiento expreso para que mi entrenador trate los datos de salud que facilito en este " +
+  "formulario y durante el asesoramiento (peso, medidas, alimentación, actividad, salud y, en su caso, " +
+  "fotos de progreso) con la única finalidad de prestarme el servicio. Sé que puedo pedir en cualquier " +
+  "momento una copia de mis datos, corregirlos o que se eliminen, y retirar este consentimiento.";

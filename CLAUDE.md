@@ -34,6 +34,13 @@ comentarios del código y documentación están en **español**. Unidades: kg, c
 - **Reparto de funciones:** la calculadora y el creador de dietas son SOLO del entrenador. El
   cliente (portal) solo ve el resultado: progreso, objetivos semanales, macros, dieta y
   suplementación que le asigna el entrenador, y hace su seguimiento (peso, check-in, diario de comidas).
+- **Formulario de alta:** el entrenador crea un enlace único (`/alta/<código>`, un solo uso, caduca a
+  los 30 días) y el cliente lo rellena sin cuenta. Las preguntas viven en `src/lib/formulario-alta.ts`
+  (pantalla, validación y resumen salen de ahí). Las respuestas van a `formularios_alta`; el cliente
+  anónimo solo puede usar `ver_formulario_alta` y `enviar_formulario_alta`. El entrenador revisa y
+  crea la ficha con un clic; lo que no cabe en la ficha se muestra como "Cuestionario inicial".
+- **Medidas:** tabla `medidas` (por fecha, todas opcionales, basta una). Las apunta el entrenador en Progreso
+  o el cliente (portal, políticas ya puestas); las del formulario de alta pasan aquí al crear la ficha.
 - **Datos de ejemplo:** 4 clientes ficticios (`src/lib/ejemplos.ts`), marcados `es_ejemplo`.
 
 ## Fases

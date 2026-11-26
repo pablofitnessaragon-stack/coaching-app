@@ -24,8 +24,11 @@ export async function proxy(request: NextRequest) {
   );
   const { data } = await supabase.auth.getClaims();
   const conectado = !!data?.claims;
-  const enLogin = request.nextUrl.pathname.startsWith("/login");
-  if (!conectado && !enLogin) {
+  const ruta = request.nextUrl.pathname;
+  const enLogin = ruta.startsWith("/login");
+  // El formulario de alta lo rellena el cliente sin cuenta (protegido por el código del enlace)
+  const publica = ruta.startsWith("/alta/");
+  if (!conectado && !enLogin && !publica) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
   if (conectado && enLogin) {

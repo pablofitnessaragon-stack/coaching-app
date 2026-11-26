@@ -13,6 +13,7 @@ import { crearClienteServidor } from "@/lib/supabase/server";
 import { calcularEdad } from "@/lib/nutrition/edad";
 import { calcularPlan, configPorDefecto, type ConfigPlan } from "@/lib/nutrition/plan";
 import { TEXTO_CONSENTIMIENTO_VERSION } from "@/lib/consentimiento";
+import { CLAVES_MEDIDAS, medidasDesdeRespuestas, type Respuestas } from "@/lib/formulario-alta";
 
 export interface EstadoFormulario {
   error?: string;
@@ -67,44 +68,88 @@ export async function crearCliente(_: EstadoFormulario, fd: FormData): Promise<E
   }
   const r = esquemaCliente.safeParse(valores);
   if (!r.success) return { valores, errores: erroresDe(r.error) };
+  const creado = await insertarClienteConPlan(r.data, {
+    fecha: new Date().toISOString(),
+    version: TEXTO_CONSENTIMIENTO_VERSION,
+  });
+  if ("error" in creado) return { valores, error: creado.error };
+  revalidatePath("/clientes");
+  redirect(`/clientes/${creado.id}`);
+}
 
+/**
+ * Crea la ficha a partir de un formulario de alta recibido. El consentimiento
+ * es el que dio el propio cliente al enviar el formulario.
+ */
+export async function crearClienteDesdeAlta(altaId: string, _: EstadoFormulario, fd: FormData): Promise<EstadoFormulario> {
+  await exigirEntrenador();
+  const valores = leerFormulario(fd);
+  const r = esquemaCliente.safeParse(valores);
+  if (!r.success) return { valores, errores: erroresDe(r.error) };
+  const supabase = await crearClienteServidor();
+  const { data: alta } = await supabase
+    .from("formularios_alta")
+    .select("estado, consentimiento_fecha, consentimiento_version, respuestas")
+    .eq("id", altaId)
+    .maybeSingle();
+  if (!alta || alta.estado !== "recibido" || !alta.consentimiento_fecha) {
+    return { valores, error: "Este formulario ya se ha usado o no tiene consentimiento." };
+  }
+  const creado = await insertarClienteConPlan(r.data, {
+    fecha: alta.consentimiento_fecha,
+    version: alta.consentimiento_version ?? "",
+  });
+  if ("error" in creado) return { valores, error: creado.error };
+  // Si puso medidas en el formulario, son sus primeras medidas
+  const medidas = medidasDesdeRespuestas((alta.respuestas ?? {}) as Respuestas);
+  if (medidas) {
+    await supabase.from("medidas").insert({ cliente_id: creado.id, fecha: r.data.fecha_inicio, ...medidas, nota: "Formulario de alta" });
+  }
+  await supabase.from("formularios_alta").update({ estado: "convertido", cliente_id: creado.id }).eq("id", altaId);
+  revalidatePath("/clientes");
+  redirect(`/clientes/${creado.id}`);
+}
+
+/** Guarda la ficha, el primer peso y un primer plan con valores por defecto. */
+async function insertarClienteConPlan(
+  datos: z.infer<typeof esquemaCliente>,
+  consentimiento: { fecha: string; version: string },
+): Promise<{ id: string } | { error: string }> {
   const supabase = await crearClienteServidor();
   const { data, error } = await supabase
     .from("clientes")
     .insert({
-      ...r.data,
+      ...datos,
       consentimiento_salud: true,
-      consentimiento_fecha: new Date().toISOString(),
-      consentimiento_version: TEXTO_CONSENTIMIENTO_VERSION,
+      consentimiento_fecha: consentimiento.fecha,
+      consentimiento_version: consentimiento.version,
     })
     .select("id")
     .single();
-  if (error) return { valores, error: "No se pudo guardar: " + error.message };
+  if (error) return { error: "No se pudo guardar: " + error.message };
 
   // Primer registro de peso y primer plan con valores por defecto
   await supabase.from("registros_peso").insert({
     cliente_id: data.id,
-    fecha: r.data.fecha_inicio,
-    peso_kg: r.data.peso_inicial_kg,
+    fecha: datos.fecha_inicio,
+    peso_kg: datos.peso_inicial_kg,
     nota: "Peso inicial",
   });
-  const config = configPorDefecto(r.data.objetivo);
-  if (r.data.pasos_diarios != null) config.pasosDiarios = r.data.pasos_diarios;
-  if (r.data.dias_entreno != null) config.diasEntreno = r.data.dias_entreno;
-  config.factorEstiloVida = { sedentario: 1.15, de_pie: 1.25, fisico: 1.4 }[r.data.estilo_vida];
-  if (r.data.tipo_entreno.includes("cardio") && !r.data.tipo_entreno.includes("fuerza")) {
+  const config = configPorDefecto(datos.objetivo);
+  if (datos.pasos_diarios != null) config.pasosDiarios = datos.pasos_diarios;
+  if (datos.dias_entreno != null) config.diasEntreno = datos.dias_entreno;
+  config.factorEstiloVida = { sedentario: 1.15, de_pie: 1.25, fisico: 1.4 }[datos.estilo_vida];
+  if (datos.tipo_entreno.includes("cardio") && !datos.tipo_entreno.includes("fuerza")) {
     config.sesiones.entreno.met = 7;
   }
   await guardarPlanInterno(data.id, config, "Plan inicial (valores por defecto)", {
-    sexo: r.data.sexo,
-    pesoKg: r.data.peso_inicial_kg,
-    alturaCm: r.data.altura_cm,
-    edad: calcularEdad(r.data.fecha_nacimiento),
-    grasaPct: r.data.grasa_inicial_pct,
+    sexo: datos.sexo,
+    pesoKg: datos.peso_inicial_kg,
+    alturaCm: datos.altura_cm,
+    edad: calcularEdad(datos.fecha_nacimiento),
+    grasaPct: datos.grasa_inicial_pct,
   });
-
-  revalidatePath("/clientes");
-  redirect(`/clientes/${data.id}`);
+  return { id: data.id };
 }
 
 export async function actualizarCliente(id: string, _: EstadoFormulario, fd: FormData): Promise<EstadoFormulario> {
@@ -161,6 +206,65 @@ export async function borrarPeso(clienteId: string, pesoId: string) {
   await exigirEntrenador();
   const supabase = await crearClienteServidor();
   await supabase.from("registros_peso").delete().eq("id", pesoId).eq("cliente_id", clienteId);
+  revalidatePath(`/clientes/${clienteId}`, "layout");
+}
+
+/* ---------- Formularios de alta ---------- */
+
+/** Crea un enlace nuevo para que un cliente rellene su formulario de alta. */
+export async function crearEnlaceAlta(fd: FormData) {
+  await exigirEntrenador();
+  const nombre = String(fd.get("nombre_previsto") ?? "").trim().slice(0, 120) || null;
+  const supabase = await crearClienteServidor();
+  const { data, error } = await supabase.from("formularios_alta").insert({ nombre_previsto: nombre }).select("id").single();
+  if (error) throw new Error(error.message);
+  revalidatePath("/clientes/altas");
+  redirect(`/clientes/altas?nuevo=${data.id}`);
+}
+
+/** Borra un enlace o unas respuestas que no se van a usar. */
+export async function borrarFormularioAlta(id: string) {
+  await exigirEntrenador();
+  const supabase = await crearClienteServidor();
+  await supabase.from("formularios_alta").delete().eq("id", id).neq("estado", "convertido");
+  revalidatePath("/clientes/altas");
+  redirect("/clientes/altas");
+}
+
+/* ---------- Medidas ---------- */
+
+const medidaOpcional = (min: number, max: number) =>
+  z.preprocess(
+    (v) => (v === "" || v == null ? null : String(v).replace(",", ".")),
+    z.coerce.number().min(min).max(max).nullable(),
+  );
+
+const esquemaMedidas = z.object({
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  cintura_cm: medidaOpcional(40, 200),
+  cadera_cm: medidaOpcional(50, 200),
+  pecho_cm: medidaOpcional(50, 200),
+  brazo_cm: medidaOpcional(15, 70),
+  muslo_cm: medidaOpcional(25, 100),
+  nota: z.preprocess(vacioANull, z.string().nullable()),
+});
+
+/** Apunta medidas (todas opcionales; basta con una). Si ya había ese día, se sustituyen. */
+export async function registrarMedidas(clienteId: string, _: EstadoFormulario, fd: FormData): Promise<EstadoFormulario> {
+  const r = esquemaMedidas.safeParse(Object.fromEntries(fd.entries()));
+  if (!r.success) return { error: "Revisa los valores: alguna medida está fuera de lo normal." };
+  if (CLAVES_MEDIDAS.every((c) => r.data[c] == null)) return { error: "Escribe al menos una medida." };
+  const supabase = await crearClienteServidor();
+  const { error } = await supabase.from("medidas").upsert({ cliente_id: clienteId, ...r.data }, { onConflict: "cliente_id,fecha" });
+  if (error) return { error: "No se pudo guardar: " + error.message };
+  revalidatePath(`/clientes/${clienteId}`, "layout");
+  return { ok: true };
+}
+
+export async function borrarMedida(clienteId: string, medidaId: string) {
+  await exigirEntrenador();
+  const supabase = await crearClienteServidor();
+  await supabase.from("medidas").delete().eq("id", medidaId).eq("cliente_id", clienteId);
   revalidatePath(`/clientes/${clienteId}`, "layout");
 }
 

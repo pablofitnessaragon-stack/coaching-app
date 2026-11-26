@@ -71,6 +71,31 @@ export interface PlanFila {
   objetivos_dia: ObjetivoDiaFila[];
 }
 
+export interface FormularioAlta {
+  id: string;
+  token: string;
+  nombre_previsto: string | null;
+  estado: "pendiente" | "recibido" | "convertido";
+  respuestas: import("./formulario-alta").Respuestas | null;
+  consentimiento_fecha: string | null;
+  consentimiento_version: string | null;
+  enviado_at: string | null;
+  cliente_id: string | null;
+  caduca_at: string;
+  created_at: string;
+}
+
+export interface Medida {
+  id: string;
+  fecha: string;
+  cintura_cm: number | null;
+  cadera_cm: number | null;
+  pecho_cm: number | null;
+  brazo_cm: number | null;
+  muslo_cm: number | null;
+  nota: string | null;
+}
+
 export interface Nota {
   id: string;
   texto: string;
@@ -147,4 +172,34 @@ export async function obtenerNotas(clienteId: string): Promise<Nota[]> {
     .eq("cliente_id", clienteId)
     .order("created_at", { ascending: false });
   return (data as Nota[]) ?? [];
+}
+
+export async function listarFormulariosAlta(): Promise<FormularioAlta[]> {
+  const supabase = await crearClienteServidor();
+  const { data } = await supabase.from("formularios_alta").select("*").order("created_at", { ascending: false });
+  return (data as FormularioAlta[]) ?? [];
+}
+
+export async function obtenerFormularioAlta(id: string): Promise<FormularioAlta | null> {
+  const supabase = await crearClienteServidor();
+  const { data } = await supabase.from("formularios_alta").select("*").eq("id", id).maybeSingle();
+  return (data as FormularioAlta) ?? null;
+}
+
+/** Cuestionario inicial con el que se creó la ficha de un cliente (si lo hay). */
+export async function obtenerAltaDeCliente(clienteId: string): Promise<FormularioAlta | null> {
+  const supabase = await crearClienteServidor();
+  const { data } = await supabase.from("formularios_alta").select("*").eq("cliente_id", clienteId).maybeSingle();
+  return (data as FormularioAlta) ?? null;
+}
+
+/** Medidas corporales del cliente, de la más antigua a la más reciente. */
+export async function obtenerMedidas(clienteId: string): Promise<Medida[]> {
+  const supabase = await crearClienteServidor();
+  const { data } = await supabase
+    .from("medidas")
+    .select("id, fecha, cintura_cm, cadera_cm, pecho_cm, brazo_cm, muslo_cm, nota")
+    .eq("cliente_id", clienteId)
+    .order("fecha");
+  return ((data as Medida[]) ?? []).map((m) => num(m, ["cintura_cm", "cadera_cm", "pecho_cm", "brazo_cm", "muslo_cm"]));
 }

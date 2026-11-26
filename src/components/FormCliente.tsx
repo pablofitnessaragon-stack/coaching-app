@@ -11,6 +11,10 @@ interface Props {
   accion: (estado: EstadoFormulario, fd: FormData) => Promise<EstadoFormulario>;
   cliente?: Cliente;
   textoBoton: string;
+  /** Valores para rellenar un cliente nuevo (p. ej. desde el formulario de alta). */
+  valoresIniciales?: Record<string, unknown>;
+  /** Si el cliente ya dio su consentimiento (formulario de alta), se muestra en vez de la casilla. */
+  consentimientoDado?: string;
 }
 
 const TIPOS_ENTRENO = [
@@ -20,13 +24,13 @@ const TIPOS_ENTRENO = [
   ["deporte", "Deporte"],
 ] as const;
 
-export default function FormCliente({ accion, cliente: c, textoBoton }: Props) {
+export default function FormCliente({ accion, cliente: c, textoBoton, valoresIniciales, consentimientoDado }: Props) {
   const [estado, enviar, enviando] = useActionState(accion, {});
   const err = (campo: string) =>
     estado.errores?.[campo] ? <p className="mt-1 text-xs text-red-600">{estado.errores[campo]}</p> : null;
   const hoy = new Date().toISOString().slice(0, 10);
   // Tras enviar, React vacía el formulario: rellenamos con lo enviado (o con la ficha)
-  const enviado = estado.valores;
+  const enviado = estado.valores ?? valoresIniciales;
   const v = (campo: keyof Cliente, porDefecto = ""): string => {
     if (enviado && campo in enviado) return String(enviado[campo] ?? "");
     const x = c?.[campo];
@@ -163,7 +167,14 @@ export default function FormCliente({ accion, cliente: c, textoBoton }: Props) {
         </div>
       </section>
 
-      {!c && (
+      {!c && consentimientoDado && (
+        <section className="tarjeta space-y-2 border-marca-500/40 bg-marca-50/40">
+          <h2 className="subtitulo">Consentimiento (RGPD)</h2>
+          <p className="text-sm">✅ {consentimientoDado}</p>
+        </section>
+      )}
+
+      {!c && !consentimientoDado && (
         <section className="tarjeta space-y-2 border-marca-500/40 bg-marca-50/40">
           <h2 className="subtitulo">Consentimiento (RGPD)</h2>
           <label className="flex items-start gap-3 text-sm">
