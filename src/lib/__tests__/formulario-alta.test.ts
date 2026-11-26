@@ -3,6 +3,7 @@ import {
   TODAS_LAS_PREGUNTAS,
   avisosSalud,
   fichaDesdeRespuestas,
+  medidasDesdeRespuestas,
   textoRespuesta,
   validarRespuestas,
   type EntradaCruda,
@@ -94,7 +95,8 @@ describe("textoRespuesta y avisos", () => {
   it("muestra textos legibles", () => {
     expect(textoRespuesta(p("objetivo"), "recomposicion")).toBe("Perder grasa y ganar músculo a la vez");
     expect(textoRespuesta(p("peso_inicial_kg"), 68.4)).toBe("68,4 kg");
-    expect(textoRespuesta(p("fecha_nacimiento"), "1990-05-12")).toBe("12/05/1990");
+    // Con la fecha de nacimiento se muestra también la edad (calculada a día de hoy)
+    expect(textoRespuesta(p("fecha_nacimiento"), "1990-05-12")).toMatch(/^12\/05\/1990 \(\d+ años\)$/);
     expect(textoRespuesta(p("tipo_entreno"), ["fuerza", "hiit"])).toBe("Fuerza / pesas, HIIT / clases intensas");
     expect(textoRespuesta(p("alergias"), undefined)).toBeNull();
   });
@@ -102,5 +104,16 @@ describe("textoRespuesta y avisos", () => {
     const avisos = avisosSalud({ embarazo: "embarazo", relacion_comida: "si" });
     expect(avisos).toHaveLength(2);
     expect(avisos[0]).toMatch(/Embarazada/);
+  });
+});
+
+describe("medidasDesdeRespuestas", () => {
+  it("las medidas son opcionales: sin ninguna devuelve null", () => {
+    const r = validarRespuestas(minimo);
+    expect(r.ok && medidasDesdeRespuestas(r.respuestas)).toBeNull();
+  });
+  it("pasa solo las que puso el cliente", () => {
+    const r = validarRespuestas({ ...minimo, cintura_cm: "78,5", muslo_cm: "55" });
+    expect(r.ok && medidasDesdeRespuestas(r.respuestas)).toEqual({ cintura_cm: 78.5, muslo_cm: 55 });
   });
 });

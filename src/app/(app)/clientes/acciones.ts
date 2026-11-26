@@ -13,6 +13,7 @@ import { crearClienteServidor } from "@/lib/supabase/server";
 import { calcularEdad } from "@/lib/nutrition/edad";
 import { calcularPlan, configPorDefecto, type ConfigPlan } from "@/lib/nutrition/plan";
 import { TEXTO_CONSENTIMIENTO_VERSION } from "@/lib/consentimiento";
+import { CLAVES_MEDIDAS, medidasDesdeRespuestas, type Respuestas } from "@/lib/formulario-alta";
 
 export interface EstadoFormulario {
   error?: string;
@@ -88,7 +89,7 @@ export async function crearClienteDesdeAlta(altaId: string, _: EstadoFormulario,
   const supabase = await crearClienteServidor();
   const { data: alta } = await supabase
     .from("formularios_alta")
-    .select("estado, consentimiento_fecha, consentimiento_version")
+    .select("estado, consentimiento_fecha, consentimiento_version, respuestas")
     .eq("id", altaId)
     .maybeSingle();
   if (!alta || alta.estado !== "recibido" || !alta.consentimiento_fecha) {
@@ -99,6 +100,11 @@ export async function crearClienteDesdeAlta(altaId: string, _: EstadoFormulario,
     version: alta.consentimiento_version ?? "",
   });
   if ("error" in creado) return { valores, error: creado.error };
+  // Si puso medidas en el formulario, son sus primeras medidas
+  const medidas = medidasDesdeRespuestas((alta.respuestas ?? {}) as Respuestas);
+  if (medidas) {
+    await supabase.from("medidas").insert({ cliente_id: creado.id, fecha: r.data.fecha_inicio, ...medidas, nota: "Formulario de alta" });
+  }
   await supabase.from("formularios_alta").update({ estado: "convertido", cliente_id: creado.id }).eq("id", altaId);
   revalidatePath("/clientes");
   redirect(`/clientes/${creado.id}`);
@@ -223,6 +229,43 @@ export async function borrarFormularioAlta(id: string) {
   await supabase.from("formularios_alta").delete().eq("id", id).neq("estado", "convertido");
   revalidatePath("/clientes/altas");
   redirect("/clientes/altas");
+}
+
+/* ---------- Medidas ---------- */
+
+const medidaOpcional = (min: number, max: number) =>
+  z.preprocess(
+    (v) => (v === "" || v == null ? null : String(v).replace(",", ".")),
+    z.coerce.number().min(min).max(max).nullable(),
+  );
+
+const esquemaMedidas = z.object({
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  cintura_cm: medidaOpcional(40, 200),
+  cadera_cm: medidaOpcional(50, 200),
+  pecho_cm: medidaOpcional(50, 200),
+  brazo_cm: medidaOpcional(15, 70),
+  muslo_cm: medidaOpcional(25, 100),
+  nota: z.preprocess(vacioANull, z.string().nullable()),
+});
+
+/** Apunta medidas (todas opcionales; basta con una). Si ya había ese día, se sustituyen. */
+export async function registrarMedidas(clienteId: string, _: EstadoFormulario, fd: FormData): Promise<EstadoFormulario> {
+  const r = esquemaMedidas.safeParse(Object.fromEntries(fd.entries()));
+  if (!r.success) return { error: "Revisa los valores: alguna medida está fuera de lo normal." };
+  if (CLAVES_MEDIDAS.every((c) => r.data[c] == null)) return { error: "Escribe al menos una medida." };
+  const supabase = await crearClienteServidor();
+  const { error } = await supabase.from("medidas").upsert({ cliente_id: clienteId, ...r.data }, { onConflict: "cliente_id,fecha" });
+  if (error) return { error: "No se pudo guardar: " + error.message };
+  revalidatePath(`/clientes/${clienteId}`, "layout");
+  return { ok: true };
+}
+
+export async function borrarMedida(clienteId: string, medidaId: string) {
+  await exigirEntrenador();
+  const supabase = await crearClienteServidor();
+  await supabase.from("medidas").delete().eq("id", medidaId).eq("cliente_id", clienteId);
+  revalidatePath(`/clientes/${clienteId}`, "layout");
 }
 
 /* ---------- Notas ---------- */

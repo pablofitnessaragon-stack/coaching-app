@@ -11,6 +11,7 @@
  *
  * Sin dependencias de pantalla ni de base de datos: se puede probar con tests.
  */
+import { calcularEdad } from "./nutrition/edad";
 
 export type TipoPregunta =
   | "texto"
@@ -139,9 +140,9 @@ export const SECCIONES: Seccion[] = [
   },
   {
     id: "medidas",
-    titulo: "Medidas iniciales",
+    titulo: "Medidas iniciales (opcional)",
     intro:
-      "Opcional, pero muy útil para ver tu progreso más allá de la báscula. Mide con una cinta métrica flexible, sin apretar, por la mañana.",
+      "Si tienes una cinta métrica a mano, mide sin apretar y por la mañana. Si no, no pasa nada: déjalo vacío y las tomamos más adelante.",
     preguntas: [
       { clave: "cintura_cm", pregunta: "Cintura", tipo: "numero", unidad: "cm", min: 40, max: 200, paso: 0.5, ayuda: "A la altura del ombligo." },
       { clave: "cadera_cm", pregunta: "Cadera", tipo: "numero", unidad: "cm", min: 50, max: 200, paso: 0.5, ayuda: "En la parte más ancha del glúteo." },
@@ -428,7 +429,9 @@ export function textoRespuesta(p: Pregunta, valor: Respuestas[string] | undefine
   if (p.tipo === "numero") return `${String(valor).replace(".", ",")}${p.unidad ? " " + p.unidad : ""}`;
   if (p.tipo === "fecha") {
     const [a, m, d] = String(valor).split("-");
-    return `${d}/${m}/${a}`;
+    const fecha = `${d}/${m}/${a}`;
+    // La edad se calcula sola a partir de la fecha de nacimiento
+    return p.clave === "fecha_nacimiento" ? `${fecha} (${calcularEdad(String(valor))} años)` : fecha;
   }
   return String(valor);
 }
@@ -473,9 +476,20 @@ export function fichaDesdeRespuestas(r: Respuestas): Record<string, string | num
   return ficha;
 }
 
+/** Medidas del formulario que pasan al registro de medidas (tabla `medidas`). */
+export const CLAVES_MEDIDAS = ["cintura_cm", "cadera_cm", "pecho_cm", "brazo_cm", "muslo_cm"] as const;
+export type ClaveMedida = (typeof CLAVES_MEDIDAS)[number];
+
+/** Medidas que puso el cliente en el formulario, o null si no puso ninguna. */
+export function medidasDesdeRespuestas(r: Respuestas): Partial<Record<ClaveMedida, number>> | null {
+  const m: Partial<Record<ClaveMedida, number>> = {};
+  for (const c of CLAVES_MEDIDAS) if (typeof r[c] === "number") m[c] = r[c] as number;
+  return Object.keys(m).length > 0 ? m : null;
+}
+
 /** Preguntas que NO van a la ficha: se muestran aparte como cuestionario. */
 export const CLAVES_SOLO_CUESTIONARIO = new Set(
-  TODAS_LAS_PREGUNTAS.map((p) => p.clave).filter((c) => !(CAMPOS_FICHA as readonly string[]).includes(c)),
+  TODAS_LAS_PREGUNTAS.map((p) => p.clave).filter((c) => !(CAMPOS_FICHA as readonly string[]).includes(c) && !(CLAVES_MEDIDAS as readonly string[]).includes(c)),
 );
 
 /** Avisos para el entrenador a partir de las respuestas de salud. */

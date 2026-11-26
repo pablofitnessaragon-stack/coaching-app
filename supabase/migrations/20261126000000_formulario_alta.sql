@@ -86,3 +86,37 @@ revoke execute on function public.ver_formulario_alta(uuid) from public;
 revoke execute on function public.enviar_formulario_alta(uuid, jsonb, text) from public;
 grant execute on function public.ver_formulario_alta(uuid) to anon, authenticated;
 grant execute on function public.enviar_formulario_alta(uuid, jsonb, text) to anon, authenticated;
+
+-- =============================================================================
+-- Medidas corporales: opcionales y en cualquier momento. Las puede apuntar el
+-- entrenador desde la ficha o el propio cliente (portal, fase 3). Si el
+-- cliente las puso en el formulario de alta, se guardan aquí como las primeras.
+-- =============================================================================
+create table public.medidas (
+  id uuid primary key default gen_random_uuid(),
+  cliente_id uuid not null references public.clientes (id) on delete cascade,
+  fecha date not null,
+  cintura_cm numeric(5, 1) check (cintura_cm between 40 and 200),
+  cadera_cm numeric(5, 1) check (cadera_cm between 50 and 200),
+  pecho_cm numeric(5, 1) check (pecho_cm between 50 and 200),
+  brazo_cm numeric(5, 1) check (brazo_cm between 15 and 70),
+  muslo_cm numeric(5, 1) check (muslo_cm between 25 and 100),
+  nota text,
+  registrado_por uuid references auth.users (id) on delete set null default auth.uid(),
+  created_at timestamptz not null default now(),
+  unique (cliente_id, fecha),
+  -- Al menos una medida
+  check (coalesce(cintura_cm, cadera_cm, pecho_cm, brazo_cm, muslo_cm) is not null)
+);
+create index on public.medidas (cliente_id, fecha);
+
+alter table public.medidas enable row level security;
+
+create policy "entrenador gestiona medidas" on public.medidas for all
+  using (public.es_mi_cliente(cliente_id)) with check (public.es_mi_cliente(cliente_id));
+create policy "cliente ve sus medidas" on public.medidas for select using (public.soy_cliente(cliente_id));
+create policy "cliente apunta sus medidas" on public.medidas for insert with check (public.soy_cliente(cliente_id));
+create policy "cliente corrige sus medidas" on public.medidas for update
+  using (public.soy_cliente(cliente_id)) with check (public.soy_cliente(cliente_id));
+
+grant select, insert, update, delete on public.medidas to authenticated;

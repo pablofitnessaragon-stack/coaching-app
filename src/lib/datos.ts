@@ -85,6 +85,17 @@ export interface FormularioAlta {
   created_at: string;
 }
 
+export interface Medida {
+  id: string;
+  fecha: string;
+  cintura_cm: number | null;
+  cadera_cm: number | null;
+  pecho_cm: number | null;
+  brazo_cm: number | null;
+  muslo_cm: number | null;
+  nota: string | null;
+}
+
 export interface Nota {
   id: string;
   texto: string;
@@ -180,4 +191,15 @@ export async function obtenerAltaDeCliente(clienteId: string): Promise<Formulari
   const supabase = await crearClienteServidor();
   const { data } = await supabase.from("formularios_alta").select("*").eq("cliente_id", clienteId).maybeSingle();
   return (data as FormularioAlta) ?? null;
+}
+
+/** Medidas corporales del cliente, de la más antigua a la más reciente. */
+export async function obtenerMedidas(clienteId: string): Promise<Medida[]> {
+  const supabase = await crearClienteServidor();
+  const { data } = await supabase
+    .from("medidas")
+    .select("id, fecha, cintura_cm, cadera_cm, pecho_cm, brazo_cm, muslo_cm, nota")
+    .eq("cliente_id", clienteId)
+    .order("fecha");
+  return ((data as Medida[]) ?? []).map((m) => num(m, ["cintura_cm", "cadera_cm", "pecho_cm", "brazo_cm", "muslo_cm"]));
 }
