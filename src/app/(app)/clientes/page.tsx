@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { exigirEntrenador } from "@/lib/auth";
-import { listarClientes, obtenerPesos, obtenerPlanes } from "@/lib/datos";
+import { listarClientes, listarFormulariosAlta, obtenerPesos, obtenerPlanes } from "@/lib/datos";
 import { resumirCliente } from "@/lib/resumen";
 import { NOMBRE_OBJETIVO } from "@/lib/nutrition/tipos";
 import { Cambio, EtiquetaRitmo, Insignia, fmtNum } from "@/components/ui";
@@ -11,15 +11,25 @@ export default async function PaginaClientes() {
   await exigirEntrenador();
   const clientes = await listarClientes();
   const ids = clientes.map((c) => c.id);
-  const [pesos, planes] = await Promise.all([obtenerPesos(ids), obtenerPlanes(ids, true)]);
+  const [pesos, planes, altas] = await Promise.all([obtenerPesos(ids), obtenerPlanes(ids, true), listarFormulariosAlta()]);
+  const altasRecibidas = altas.filter((a) => a.estado === "recibido").length;
 
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="titulo">Clientes</h1>
         <span className="text-sm text-slate-500">{clientes.length} en total</span>
-        <Link href="/clientes/nuevo" className="boton ml-auto">+ Nuevo cliente</Link>
+        <div className="ml-auto flex flex-wrap gap-2">
+          <Link href="/clientes/altas" className="boton-sec">Formulario de alta</Link>
+          <Link href="/clientes/nuevo" className="boton">+ Nuevo cliente</Link>
+        </div>
       </div>
+
+      {altasRecibidas > 0 && (
+        <Link href="/clientes/altas" className="block rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-900 hover:bg-amber-100">
+          📋 Tienes {altasRecibidas === 1 ? "1 formulario de alta nuevo" : `${altasRecibidas} formularios de alta nuevos`} para revisar →
+        </Link>
+      )}
 
       {clientes.length === 0 ? (
         <div className="tarjeta space-y-3 text-center">

@@ -67,44 +67,83 @@ export async function crearCliente(_: EstadoFormulario, fd: FormData): Promise<E
   }
   const r = esquemaCliente.safeParse(valores);
   if (!r.success) return { valores, errores: erroresDe(r.error) };
+  const creado = await insertarClienteConPlan(r.data, {
+    fecha: new Date().toISOString(),
+    version: TEXTO_CONSENTIMIENTO_VERSION,
+  });
+  if ("error" in creado) return { valores, error: creado.error };
+  revalidatePath("/clientes");
+  redirect(`/clientes/${creado.id}`);
+}
 
+/**
+ * Crea la ficha a partir de un formulario de alta recibido. El consentimiento
+ * es el que dio el propio cliente al enviar el formulario.
+ */
+export async function crearClienteDesdeAlta(altaId: string, _: EstadoFormulario, fd: FormData): Promise<EstadoFormulario> {
+  await exigirEntrenador();
+  const valores = leerFormulario(fd);
+  const r = esquemaCliente.safeParse(valores);
+  if (!r.success) return { valores, errores: erroresDe(r.error) };
+  const supabase = await crearClienteServidor();
+  const { data: alta } = await supabase
+    .from("formularios_alta")
+    .select("estado, consentimiento_fecha, consentimiento_version")
+    .eq("id", altaId)
+    .maybeSingle();
+  if (!alta || alta.estado !== "recibido" || !alta.consentimiento_fecha) {
+    return { valores, error: "Este formulario ya se ha usado o no tiene consentimiento." };
+  }
+  const creado = await insertarClienteConPlan(r.data, {
+    fecha: alta.consentimiento_fecha,
+    version: alta.consentimiento_version ?? "",
+  });
+  if ("error" in creado) return { valores, error: creado.error };
+  await supabase.from("formularios_alta").update({ estado: "convertido", cliente_id: creado.id }).eq("id", altaId);
+  revalidatePath("/clientes");
+  redirect(`/clientes/${creado.id}`);
+}
+
+/** Guarda la ficha, el primer peso y un primer plan con valores por defecto. */
+async function insertarClienteConPlan(
+  datos: z.infer<typeof esquemaCliente>,
+  consentimiento: { fecha: string; version: string },
+): Promise<{ id: string } | { error: string }> {
   const supabase = await crearClienteServidor();
   const { data, error } = await supabase
     .from("clientes")
     .insert({
-      ...r.data,
+      ...datos,
       consentimiento_salud: true,
-      consentimiento_fecha: new Date().toISOString(),
-      consentimiento_version: TEXTO_CONSENTIMIENTO_VERSION,
+      consentimiento_fecha: consentimiento.fecha,
+      consentimiento_version: consentimiento.version,
     })
     .select("id")
     .single();
-  if (error) return { valores, error: "No se pudo guardar: " + error.message };
+  if (error) return { error: "No se pudo guardar: " + error.message };
 
   // Primer registro de peso y primer plan con valores por defecto
   await supabase.from("registros_peso").insert({
     cliente_id: data.id,
-    fecha: r.data.fecha_inicio,
-    peso_kg: r.data.peso_inicial_kg,
+    fecha: datos.fecha_inicio,
+    peso_kg: datos.peso_inicial_kg,
     nota: "Peso inicial",
   });
-  const config = configPorDefecto(r.data.objetivo);
-  if (r.data.pasos_diarios != null) config.pasosDiarios = r.data.pasos_diarios;
-  if (r.data.dias_entreno != null) config.diasEntreno = r.data.dias_entreno;
-  config.factorEstiloVida = { sedentario: 1.15, de_pie: 1.25, fisico: 1.4 }[r.data.estilo_vida];
-  if (r.data.tipo_entreno.includes("cardio") && !r.data.tipo_entreno.includes("fuerza")) {
+  const config = configPorDefecto(datos.objetivo);
+  if (datos.pasos_diarios != null) config.pasosDiarios = datos.pasos_diarios;
+  if (datos.dias_entreno != null) config.diasEntreno = datos.dias_entreno;
+  config.factorEstiloVida = { sedentario: 1.15, de_pie: 1.25, fisico: 1.4 }[datos.estilo_vida];
+  if (datos.tipo_entreno.includes("cardio") && !datos.tipo_entreno.includes("fuerza")) {
     config.sesiones.entreno.met = 7;
   }
   await guardarPlanInterno(data.id, config, "Plan inicial (valores por defecto)", {
-    sexo: r.data.sexo,
-    pesoKg: r.data.peso_inicial_kg,
-    alturaCm: r.data.altura_cm,
-    edad: calcularEdad(r.data.fecha_nacimiento),
-    grasaPct: r.data.grasa_inicial_pct,
+    sexo: datos.sexo,
+    pesoKg: datos.peso_inicial_kg,
+    alturaCm: datos.altura_cm,
+    edad: calcularEdad(datos.fecha_nacimiento),
+    grasaPct: datos.grasa_inicial_pct,
   });
-
-  revalidatePath("/clientes");
-  redirect(`/clientes/${data.id}`);
+  return { id: data.id };
 }
 
 export async function actualizarCliente(id: string, _: EstadoFormulario, fd: FormData): Promise<EstadoFormulario> {
@@ -162,6 +201,28 @@ export async function borrarPeso(clienteId: string, pesoId: string) {
   const supabase = await crearClienteServidor();
   await supabase.from("registros_peso").delete().eq("id", pesoId).eq("cliente_id", clienteId);
   revalidatePath(`/clientes/${clienteId}`, "layout");
+}
+
+/* ---------- Formularios de alta ---------- */
+
+/** Crea un enlace nuevo para que un cliente rellene su formulario de alta. */
+export async function crearEnlaceAlta(fd: FormData) {
+  await exigirEntrenador();
+  const nombre = String(fd.get("nombre_previsto") ?? "").trim().slice(0, 120) || null;
+  const supabase = await crearClienteServidor();
+  const { data, error } = await supabase.from("formularios_alta").insert({ nombre_previsto: nombre }).select("id").single();
+  if (error) throw new Error(error.message);
+  revalidatePath("/clientes/altas");
+  redirect(`/clientes/altas?nuevo=${data.id}`);
+}
+
+/** Borra un enlace o unas respuestas que no se van a usar. */
+export async function borrarFormularioAlta(id: string) {
+  await exigirEntrenador();
+  const supabase = await crearClienteServidor();
+  await supabase.from("formularios_alta").delete().eq("id", id).neq("estado", "convertido");
+  revalidatePath("/clientes/altas");
+  redirect("/clientes/altas");
 }
 
 /* ---------- Notas ---------- */

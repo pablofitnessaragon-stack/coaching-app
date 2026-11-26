@@ -1,4 +1,5 @@
-import { obtenerCliente } from "@/lib/datos";
+import { obtenerAltaDeCliente, obtenerCliente } from "@/lib/datos";
+import ResumenAlta from "@/components/ResumenAlta";
 import FormCliente from "@/components/FormCliente";
 import { fmtFecha } from "@/components/ui";
 import { actualizarCliente, borrarCliente } from "../../acciones";
@@ -8,11 +9,21 @@ export const metadata = { title: "Ficha" };
 export default async function Ficha({ params, searchParams }: PageProps<"/clientes/[id]/ficha">) {
   const { id } = await params;
   const { borrado } = await searchParams;
-  const c = await obtenerCliente(id);
+  const [c, alta] = await Promise.all([obtenerCliente(id), obtenerAltaDeCliente(id)]);
   if (!c) return null;
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <FormCliente accion={actualizarCliente.bind(null, id)} cliente={c} textoBoton="Guardar cambios" />
+
+      {alta?.respuestas && (
+        <details className="tarjeta group" open>
+          <summary className="subtitulo cursor-pointer list-none">
+            Cuestionario inicial <span className="text-sm font-normal text-slate-500">· enviado el {fmtFecha(alta.enviado_at!)}</span>
+          </summary>
+          <p className="ayuda mb-3 mt-1">Lo que contestó en el formulario de alta y no está en los campos de arriba.</p>
+          <ResumenAlta respuestas={alta.respuestas} soloExtra />
+        </details>
+      )}
 
       <section className="tarjeta space-y-4">
         <h2 className="subtitulo">Privacidad y datos (RGPD)</h2>
