@@ -8,7 +8,7 @@ export default async function PaginaLogin({ searchParams }: PageProps<"/login">)
     <main className="flex flex-1 items-center justify-center p-4">
       <form action={iniciarSesion} className="tarjeta w-full max-w-sm space-y-4">
         <div className="space-y-1 text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-marca-600 text-xl font-bold text-white">C</div>
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center degradado-marca rounded-xl text-xl font-extrabold text-white shadow-sm">C</div>
           <h1 className="titulo">Entrar</h1>
           <p className="ayuda">Acceso privado para entrenador y clientes</p>
         </div>

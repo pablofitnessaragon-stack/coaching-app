@@ -11,7 +11,7 @@ export const metadata = { title: "Formularios de alta" };
 const ESTADO: Record<FormularioAlta["estado"], { texto: string; clase: string }> = {
   pendiente: { texto: "Esperando respuesta", clase: "bg-slate-100 text-slate-600" },
   recibido: { texto: "Recibido: revisar", clase: "bg-amber-100 text-amber-800" },
-  convertido: { texto: "Ficha creada", clase: "bg-marca-100 text-marca-700" },
+  convertido: { texto: "Ficha creada", clase: "bg-ok-100 text-ok-700" },
 };
 
 export default async function PaginaAltas({ searchParams }: PageProps<"/clientes/altas">) {

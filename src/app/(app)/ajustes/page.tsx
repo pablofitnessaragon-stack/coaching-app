@@ -21,7 +21,7 @@ export default async function Ajustes({ searchParams }: PageProps<"/ajustes">) {
           Carga 4 clientes ficticios con varias semanas de pesos y planes para probar la app. Llevan la etiqueta
           «Ejemplo» y puedes borrarlos todos de una vez sin tocar a tus clientes reales.
         </p>
-        {ok === "borrados" && <p className="text-sm text-marca-700">Clientes de ejemplo borrados.</p>}
+        {ok === "borrados" && <p className="text-sm text-ok-700">Clientes de ejemplo borrados.</p>}
         <div className="flex flex-wrap gap-2">
           <form action={cargarEjemplos}><button className="boton">Cargar clientes de ejemplo</button></form>
           <form action={borrarEjemplos}><button className="boton-sec">Borrar clientes de ejemplo</button></form>

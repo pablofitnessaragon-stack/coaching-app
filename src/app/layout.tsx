@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false }, // datos privados: que no lo indexen buscadores
 };
 
-export const viewport: Viewport = { themeColor: "#059669" };
+export const viewport: Viewport = { themeColor: "#dc2626" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

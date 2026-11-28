@@ -31,7 +31,7 @@ export default function FormPeso({
       </div>
       <button className="boton" disabled={enviando}>{enviando ? "Guardando…" : "Guardar"}</button>
       {estado.error && <p className="w-full text-sm text-red-600">{estado.error}</p>}
-      {estado.ok && <p className="w-full text-sm text-marca-700">Peso guardado. Si ya había uno ese día, se ha sustituido.</p>}
+      {estado.ok && <p className="w-full text-sm text-ok-700">Peso guardado. Si ya había uno ese día, se ha sustituido.</p>}
     </form>
   );
 }
