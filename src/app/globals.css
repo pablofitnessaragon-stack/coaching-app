@@ -89,8 +89,13 @@ html.oscuro .boton:hover { background-color: #b91c1c; }
 html.oscuro .recharts-cartesian-grid line { stroke: #2a2a2e; }
 html.oscuro .recharts-default-tooltip { background-color: #161618 !important; border-color: #2a2a2e !important; }
 
-/* Fondo de la pantalla "Entrar": foto desenfocada y oscurecida encima de un
-   brillo rojo/naranja (lo que se ve si aún no hay foto). */
+/* Pantalla "Entrar": foto del entrenador (public/fondos/login.jpg).
+   - Móvil: la foto ocupa la parte de arriba y el formulario va abajo.
+   - Ordenador: la foto a la izquierda y el formulario a la derecha.
+   --foco-login decide qué parte de la foto se ve (horizontal vertical):
+   si la persona queda cortada, mover estos porcentajes.
+   Si no hay foto, se ve un brillo rojo/naranja sobre negro. */
+:root { --foco-login: 50% 30%; }
 .fondo-login {
   position: absolute;
   inset: 0;
@@ -99,17 +104,21 @@ html.oscuro .recharts-default-tooltip { background-color: #161618 !important; bo
     radial-gradient(ellipse at 85% 90%, rgb(249 115 22 / 0.25), transparent 55%),
     #0b0b0c;
 }
-.fondo-login::before {
-  content: "";
+.foto-login {
   position: absolute;
-  inset: -24px; /* que el desenfoque no deje bordes claros */
-  background: url("/fondos/login.jpg") center / cover no-repeat;
-  filter: blur(6px) brightness(0.45) saturate(0.9);
+  inset: 0 0 auto 0;
+  height: 62%;
+  background: url("/fondos/login.jpg") var(--foco-login) / cover no-repeat;
+  -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent);
+  mask-image: linear-gradient(180deg, #000 70%, transparent);
 }
-.fondo-login::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgb(0 0 0 / 0.35), rgb(0 0 0 / 0.6));
+@media (min-width: 1024px) {
+  .foto-login {
+    inset: 0 auto 0 0;
+    width: 58%;
+    height: 100%;
+    -webkit-mask-image: linear-gradient(90deg, #000 70%, transparent);
+    mask-image: linear-gradient(90deg, #000 70%, transparent);
+  }
 }
-html.oscuro .fondo-login + .tarjeta { background-color: rgb(22 22 24 / 0.8); }
+html.oscuro .fondo-login ~ .tarjeta { background-color: rgb(22 22 24 / 0.88); }
