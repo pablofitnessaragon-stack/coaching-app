@@ -36,3 +36,54 @@ body {
   .degradado-marca { background-image: linear-gradient(135deg, #dc2626 0%, #f97316 60%, #facc15 100%); }
   .franja-marca { @apply h-1 w-full; background-image: linear-gradient(90deg, #dc2626, #f97316, #facc15); }
 }
+
+/* =============================================================================
+   Tema oscuro (fondo negro). Se activa con la clase "oscuro" en <html>.
+   En vez de tocar cada pantalla, se reasignan los colores: los grises se
+   invierten (texto claro sobre fondo oscuro) y los tonos suaves (avisos,
+   etiquetas) pasan a versiones oscuras para que no deslumbren.
+   ============================================================================= */
+html.oscuro {
+  color-scheme: dark;
+  --color-slate-50: #1c1c1f;
+  --color-slate-100: #232326;
+  --color-slate-200: #2a2a2e;
+  --color-slate-300: #3a3a3f;
+  --color-slate-400: #71717a;
+  --color-slate-500: #a1a1aa;
+  --color-slate-600: #b4b4bb;
+  --color-slate-700: #d4d4d8;
+  --color-slate-800: #e4e4e7;
+  --color-slate-900: #fafafa;
+  --color-marca-50: #2a1212;
+  --color-marca-100: #3b1515;
+  --color-marca-700: #f87171;
+  --color-ok-50: #0f2a1f;
+  --color-ok-100: #12321f;
+  --color-ok-700: #4ade80;
+  --color-amber-50: #2a2110;
+  --color-amber-100: #3a2c10;
+  --color-amber-200: #4a3a14;
+  --color-amber-700: #fbbf24;
+  --color-amber-800: #fcd34d;
+  --color-amber-900: #fde68a;
+  --color-red-50: #2a1212;
+  --color-red-200: #4a1d1d;
+  --color-red-600: #f87171;
+  --color-red-700: #fca5a5;
+  --color-red-800: #fecaca;
+  --color-orange-100: #3a1f0f;
+  --color-orange-800: #fdba74;
+  --color-sky-100: #0f2533;
+  --color-sky-800: #7dd3fc;
+}
+html.oscuro body { background: #0b0b0c; color: #f4f4f5; }
+html.oscuro .tarjeta,
+html.oscuro .bg-white,
+html.oscuro .boton-sec { background-color: #161618; }
+html.oscuro .campo { background-color: #0f0f11; color: #f4f4f5; }
+html.oscuro header { background-color: rgb(11 11 12 / 0.9); }
+html.oscuro .boton:hover { background-color: #b91c1c; }
+html.oscuro .recharts-cartesian-grid line { stroke: #2a2a2e; }
+html.oscuro .recharts-default-tooltip { background-color: #161618 !important; border-color: #2a2a2e !important; }
+html.oscuro [class*="ring-[#f6f7f9]"] { --tw-ring-color: #0b0b0c; }

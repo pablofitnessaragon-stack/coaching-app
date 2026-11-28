@@ -7,11 +7,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false }, // datos privados: que no lo indexen buscadores
 };
 
-export const viewport: Viewport = { themeColor: "#dc2626" };
+export const viewport: Viewport = { themeColor: "#0b0b0c" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es" className="h-full antialiased">
+    <html lang="es" className="oscuro h-full antialiased">
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );
