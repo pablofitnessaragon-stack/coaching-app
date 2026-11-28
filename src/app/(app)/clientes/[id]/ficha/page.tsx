@@ -30,7 +30,7 @@ export default async function Ficha({ params, searchParams }: PageProps<"/client
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="subtitulo">Acceso del cliente a la app</h2>
           {c.acceso_portal ? (
-            <span className="inline-flex rounded-full bg-marca-100 px-2 py-0.5 text-xs font-semibold text-marca-700">Con acceso</span>
+            <span className="inline-flex rounded-full bg-ok-100 px-2 py-0.5 text-xs font-semibold text-ok-700">Con acceso</span>
           ) : (
             <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">Sin acceso</span>
           )}

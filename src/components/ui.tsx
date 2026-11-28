@@ -25,7 +25,7 @@ export function Dato({ etiqueta, valor, detalle }: { etiqueta: string; valor: Re
 }
 
 const ESTILO_RITMO: Record<EstadoRitmo, { texto: string; clase: string }> = {
-  en_ritmo: { texto: "En ritmo", clase: "bg-marca-100 text-marca-700" },
+  en_ritmo: { texto: "En ritmo", clase: "bg-ok-100 text-ok-700" },
   muy_lento: { texto: "Progreso lento", clase: "bg-amber-100 text-amber-800" },
   muy_rapido: { texto: "Demasiado rápido", clase: "bg-orange-100 text-orange-800" },
   sin_datos: { texto: "Sin datos aún", clase: "bg-slate-100 text-slate-600" },

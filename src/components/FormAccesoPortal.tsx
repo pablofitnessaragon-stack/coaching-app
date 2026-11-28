@@ -23,7 +23,7 @@ export default function FormAccesoPortal({
       </div>
       <button className="boton" disabled={enviando}>{enviando ? "Guardando…" : textoBoton}</button>
       {estado.error && <p className="w-full text-sm text-red-600">{estado.error}</p>}
-      {estado.ok && <p className="w-full text-sm text-marca-700">Hecho: ya puede entrar y ver su progreso.</p>}
+      {estado.ok && <p className="w-full text-sm text-ok-700">Hecho: ya puede entrar y ver su progreso.</p>}
     </form>
   );
 }

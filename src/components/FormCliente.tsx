@@ -189,7 +189,7 @@ export default function FormCliente({ accion, cliente: c, textoBoton, valoresIni
       {estado.errores && !estado.error && (
         <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">Revisa los campos marcados en rojo.</p>
       )}
-      {estado.ok && <p className="rounded-lg bg-marca-50 p-3 text-sm text-marca-700">Cambios guardados.</p>}
+      {estado.ok && <p className="rounded-lg bg-ok-50 p-3 text-sm text-ok-700">Cambios guardados.</p>}
 
       <div className="flex justify-end">
         <button className="boton" disabled={enviando}>{enviando ? "Guardando…" : textoBoton}</button>

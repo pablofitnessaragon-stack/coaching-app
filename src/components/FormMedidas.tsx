@@ -57,7 +57,7 @@ export default function FormMedidas({
         <span className="ayuda">Rellena solo lo que tengas. Con cuello, cintura y (en mujeres) cadera calculo el % de grasa.</span>
       </div>
       {estado.error && <p className="text-sm text-red-600">{estado.error}</p>}
-      {estado.ok && <p className="text-sm text-marca-700">Medidas guardadas. Si ya había ese día, se han sustituido.</p>}
+      {estado.ok && <p className="text-sm text-ok-700">Medidas guardadas. Si ya había ese día, se han sustituido.</p>}
     </form>
   );
 }

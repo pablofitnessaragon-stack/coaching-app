@@ -365,7 +365,7 @@ export default function Calculadora(p: Props) {
             <h2 className="subtitulo">Guardar como plan actual</h2>
             <input className="campo" value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Motivo, p. ej. «Media estancada 2 semanas: −150 kcal de carbohidratos»" />
             <button type="button" className="boton w-full" onClick={guardar} disabled={guardando}>{guardando ? "Guardando…" : "Guardar plan"}</button>
-            {mensaje && <p className={`text-sm ${mensaje.tipo === "ok" ? "text-marca-700" : "text-red-600"}`}>{mensaje.texto}</p>}
+            {mensaje && <p className={`text-sm ${mensaje.tipo === "ok" ? "text-ok-700" : "text-red-600"}`}>{mensaje.texto}</p>}
           </section>
 
           <details className="tarjeta">

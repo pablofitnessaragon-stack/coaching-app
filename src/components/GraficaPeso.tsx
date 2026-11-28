@@ -57,7 +57,7 @@ export default function GraficaPeso({ registros, ritmo, alto = 300 }: Props) {
             </>
           )}
           <Line isAnimationActive={false} dataKey="peso" name="Peso diario" stroke="#94a3b8" strokeOpacity={0} dot={{ r: 3, fill: "#94a3b8", strokeWidth: 0 }} activeDot={{ r: 5 }} />
-          <Line isAnimationActive={false} dataKey="media" name="Media 7 días" stroke="#059669" strokeWidth={2.5} dot={false} />
+          <Line isAnimationActive={false} dataKey="media" name="Media 7 días" stroke="#dc2626" strokeWidth={2.5} dot={false} />
         </LineChart>
       </ResponsiveContainer>
     </div>

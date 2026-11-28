@@ -1,17 +1,24 @@
 @import "tailwindcss";
 
-/* Colores de la marca: cambiar aquí para toda la app */
+/* Colores de la marca: cambiar aquí para toda la app.
+   Rojo como color principal, con un degradado rojo → naranja → amarillo para
+   los detalles (logo, franja superior). "ok" es el verde de "todo bien"
+   (guardado, en ritmo): el rojo es la marca, no significa "error". */
 @theme {
-  --color-marca-50: #ecfdf5;
-  --color-marca-100: #d1fae5;
-  --color-marca-500: #10b981;
-  --color-marca-600: #059669;
-  --color-marca-700: #047857;
+  --color-marca-50: #fef2f2;
+  --color-marca-100: #fee2e2;
+  --color-marca-500: #ef4444;
+  --color-marca-600: #dc2626;
+  --color-marca-700: #b91c1c;
+  --color-fondo: #f6f7f9;
+  --color-ok-50: #ecfdf5;
+  --color-ok-100: #d1fae5;
+  --color-ok-700: #047857;
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 body {
-  background: #f6f7f9;
+  background: var(--color-fondo);
   color: #0f172a;
 }
 
@@ -22,8 +29,87 @@ body {
   .campo { @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base outline-none focus:border-marca-500 focus:ring-2 focus:ring-marca-100 sm:text-sm; }
   .boton { @apply inline-flex items-center justify-center gap-2 rounded-lg bg-marca-600 px-4 py-2 text-sm font-semibold text-white hover:bg-marca-700 disabled:opacity-50; }
   .boton-sec { @apply inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50; }
-  .boton-peligro { @apply inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50; }
+  .boton-peligro { @apply inline-flex items-center justify-center gap-2 rounded-lg bg-red-900 px-4 py-2 text-sm font-semibold text-white hover:bg-red-950 disabled:opacity-50; }
   .titulo { @apply text-xl font-bold tracking-tight sm:text-2xl; }
   .subtitulo { @apply text-base font-semibold; }
   .ayuda { @apply text-xs text-slate-500; }
+  /* Degradado de la marca: logo y detalles pequeños */
+  .degradado-marca { background-image: linear-gradient(135deg, #dc2626 0%, #f97316 60%, #facc15 100%); }
+  .franja-marca { @apply h-1 w-full; background-image: linear-gradient(90deg, #dc2626, #f97316, #facc15); }
 }
+
+/* =============================================================================
+   Tema oscuro (fondo negro). Se activa con la clase "oscuro" en <html>.
+   En vez de tocar cada pantalla, se reasignan los colores: los grises se
+   invierten (texto claro sobre fondo oscuro) y los tonos suaves (avisos,
+   etiquetas) pasan a versiones oscuras para que no deslumbren.
+   ============================================================================= */
+html.oscuro {
+  color-scheme: dark;
+  --color-fondo: #0b0b0c;
+  --color-slate-50: #1c1c1f;
+  --color-slate-100: #232326;
+  --color-slate-200: #2a2a2e;
+  --color-slate-300: #3a3a3f;
+  --color-slate-400: #71717a;
+  --color-slate-500: #a1a1aa;
+  --color-slate-600: #b4b4bb;
+  --color-slate-700: #d4d4d8;
+  --color-slate-800: #e4e4e7;
+  --color-slate-900: #fafafa;
+  --color-marca-50: #2a1212;
+  --color-marca-100: #3b1515;
+  --color-marca-700: #f87171;
+  --color-ok-50: #0f2a1f;
+  --color-ok-100: #12321f;
+  --color-ok-700: #4ade80;
+  --color-amber-50: #2a2110;
+  --color-amber-100: #3a2c10;
+  --color-amber-200: #4a3a14;
+  --color-amber-700: #fbbf24;
+  --color-amber-800: #fcd34d;
+  --color-amber-900: #fde68a;
+  --color-red-50: #2a1212;
+  --color-red-200: #4a1d1d;
+  --color-red-600: #f87171;
+  --color-red-700: #fca5a5;
+  --color-red-800: #fecaca;
+  --color-orange-100: #3a1f0f;
+  --color-orange-800: #fdba74;
+  --color-sky-100: #0f2533;
+  --color-sky-800: #7dd3fc;
+}
+html.oscuro body { background: #0b0b0c; color: #f4f4f5; }
+html.oscuro .tarjeta,
+html.oscuro .bg-white,
+html.oscuro .boton-sec { background-color: #161618; }
+html.oscuro .campo { background-color: #0f0f11; color: #f4f4f5; }
+html.oscuro header { background-color: rgb(11 11 12 / 0.9); }
+html.oscuro .boton:hover { background-color: #b91c1c; }
+html.oscuro .recharts-cartesian-grid line { stroke: #2a2a2e; }
+html.oscuro .recharts-default-tooltip { background-color: #161618 !important; border-color: #2a2a2e !important; }
+
+/* Fondo de la pantalla "Entrar": foto desenfocada y oscurecida encima de un
+   brillo rojo/naranja (lo que se ve si aún no hay foto). */
+.fondo-login {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 10%, rgb(220 38 38 / 0.35), transparent 55%),
+    radial-gradient(ellipse at 85% 90%, rgb(249 115 22 / 0.25), transparent 55%),
+    #0b0b0c;
+}
+.fondo-login::before {
+  content: "";
+  position: absolute;
+  inset: -24px; /* que el desenfoque no deje bordes claros */
+  background: url("/fondos/login.jpg") center / cover no-repeat;
+  filter: blur(6px) brightness(0.45) saturate(0.9);
+}
+.fondo-login::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgb(0 0 0 / 0.35), rgb(0 0 0 / 0.6));
+}
+html.oscuro .fondo-login + .tarjeta { background-color: rgb(22 22 24 / 0.8); }

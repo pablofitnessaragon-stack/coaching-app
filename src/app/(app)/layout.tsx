@@ -7,9 +7,10 @@ export default async function LayoutApp({ children }: LayoutProps<"/">) {
   return (
     <div className="flex min-h-full flex-1 flex-col">
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
+        <div className="franja-marca" />
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4">
           <Link href="/" className="flex items-center gap-2 font-bold">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-marca-600 text-white">C</span>
+            <span className="flex h-8 w-8 items-center justify-center degradado-marca rounded-lg font-extrabold text-white shadow-sm">C</span>
             <span className="hidden sm:inline">Coaching</span>
           </Link>
           {u.rol === "entrenador" && (

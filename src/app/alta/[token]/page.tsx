@@ -26,7 +26,7 @@ export default async function PaginaAlta({ params }: PageProps<"/alta/[token]">)
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6 sm:py-10">
       <div className="mb-6 flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-marca-600 text-lg font-bold text-white">
+        <span className="flex h-10 w-10 items-center justify-center degradado-marca rounded-xl text-lg font-extrabold text-white shadow-sm">
           {(info?.entrenador ?? "C").slice(0, 1).toUpperCase()}
         </span>
         <div>
