@@ -17,7 +17,7 @@ export default async function Historial({ params }: PageProps<"/clientes/[id]/hi
         const diferencia = anterior ? p.media_semanal_kcal - anterior.media_semanal_kcal : null;
         return (
           <li key={p.id} className="relative">
-            <span className={`absolute -left-[27px] top-5 h-3 w-3 rounded-full ring-4 ring-[#f6f7f9] ${p.activo ? "bg-marca-600" : "bg-slate-300"}`} />
+            <span className={`absolute -left-[27px] top-5 h-3 w-3 rounded-full ring-4 ring-fondo ${p.activo ? "bg-marca-600" : "bg-slate-300"}`} />
             <div className="tarjeta space-y-3">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-semibold">{fmtFecha(p.created_at, { day: "numeric", month: "long", year: "numeric" })}</span>

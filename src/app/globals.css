@@ -10,6 +10,7 @@
   --color-marca-500: #ef4444;
   --color-marca-600: #dc2626;
   --color-marca-700: #b91c1c;
+  --color-fondo: #f6f7f9;
   --color-ok-50: #ecfdf5;
   --color-ok-100: #d1fae5;
   --color-ok-700: #047857;
@@ -17,7 +18,7 @@
 }
 
 body {
-  background: #f6f7f9;
+  background: var(--color-fondo);
   color: #0f172a;
 }
 
@@ -45,6 +46,7 @@ body {
    ============================================================================= */
 html.oscuro {
   color-scheme: dark;
+  --color-fondo: #0b0b0c;
   --color-slate-50: #1c1c1f;
   --color-slate-100: #232326;
   --color-slate-200: #2a2a2e;
@@ -86,4 +88,28 @@ html.oscuro header { background-color: rgb(11 11 12 / 0.9); }
 html.oscuro .boton:hover { background-color: #b91c1c; }
 html.oscuro .recharts-cartesian-grid line { stroke: #2a2a2e; }
 html.oscuro .recharts-default-tooltip { background-color: #161618 !important; border-color: #2a2a2e !important; }
-html.oscuro [class*="ring-[#f6f7f9]"] { --tw-ring-color: #0b0b0c; }
+
+/* Fondo de la pantalla "Entrar": foto desenfocada y oscurecida encima de un
+   brillo rojo/naranja (lo que se ve si aún no hay foto). */
+.fondo-login {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 10%, rgb(220 38 38 / 0.35), transparent 55%),
+    radial-gradient(ellipse at 85% 90%, rgb(249 115 22 / 0.25), transparent 55%),
+    #0b0b0c;
+}
+.fondo-login::before {
+  content: "";
+  position: absolute;
+  inset: -24px; /* que el desenfoque no deje bordes claros */
+  background: url("/fondos/login.jpg") center / cover no-repeat;
+  filter: blur(6px) brightness(0.45) saturate(0.9);
+}
+.fondo-login::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgb(0 0 0 / 0.35), rgb(0 0 0 / 0.6));
+}
+html.oscuro .fondo-login + .tarjeta { background-color: rgb(22 22 24 / 0.8); }

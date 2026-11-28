@@ -1,0 +1,1 @@
+Pon aquí la foto de fondo de la pantalla «Entrar» con el nombre login.jpg (horizontal, unos 1600 px de ancho, menos de 400 KB). La app la desenfoca y oscurece sola.
