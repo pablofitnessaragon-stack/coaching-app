@@ -95,7 +95,7 @@ html.oscuro .recharts-default-tooltip { background-color: #161618 !important; bo
    --foco-login decide qué parte de la foto se ve (horizontal vertical):
    si la persona queda cortada, mover estos porcentajes.
    Si no hay foto, se ve un brillo rojo/naranja sobre negro. */
-:root { --foco-login: 50% 30%; }
+:root { --foco-login: 72% 50%; }
 .fondo-login {
   position: absolute;
   inset: 0;
