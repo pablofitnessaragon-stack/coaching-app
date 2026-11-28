@@ -5,10 +5,10 @@ export const metadata = { title: "Entrar" };
 export default async function PaginaLogin({ searchParams }: PageProps<"/login">) {
   const { error } = await searchParams;
   return (
-    <main className="relative flex flex-1 items-center justify-center overflow-hidden p-4">
-      {/* Foto de fondo desenfocada y oscurecida. Para cambiarla, sustituye
-          public/fondos/login.jpg (si no existe, se ve solo el brillo de color). */}
-      <div aria-hidden className="fondo-login" />
+    <main className="relative flex flex-1 items-end justify-center overflow-hidden p-4 pb-8 lg:items-center lg:justify-end lg:pr-[8%]">
+      {/* Foto del entrenador. Para cambiarla, sustituye public/fondos/login.jpg
+          (si no existe, se ve solo el brillo de color). Ver .foto-login en globals.css. */}
+      <div aria-hidden className="fondo-login"><div className="foto-login" /></div>
       <form action={iniciarSesion} className="tarjeta relative w-full max-w-sm space-y-4 backdrop-blur-sm">
         <div className="space-y-1 text-center">
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center degradado-marca rounded-xl text-xl font-extrabold text-white shadow-sm">C</div>
