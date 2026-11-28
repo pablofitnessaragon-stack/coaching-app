@@ -15,8 +15,11 @@ comentarios del código y documentación están en **español**. Unidades: kg, c
 - **Next 16:** el middleware se llama `src/proxy.ts`; `params`/`searchParams` son Promesas;
   `cacheComponents` desactivado (todo es dinámico y privado).
 - **Seguridad:** toda tabla tiene RLS. El entrenador ve solo sus clientes (`es_mi_cliente`); el
-  cliente (portal) solo lo suyo (`soy_cliente`). El primer usuario creado es el entrenador; el
-  registro público está desactivado.
+  cliente (portal) solo lo suyo (`soy_cliente`), y SOLO si el entrenador le ha dado acceso
+  (`clientes.acceso_portal`, botón en Ficha → `dar_acceso_portal(cliente, email)` / `quitar_acceso_portal`).
+  El primer usuario creado es el entrenador; el registro público está desactivado. Las cuentas de
+  cliente se crean en Supabase (Authentication → Add user). Tests de privacidad en
+  `supabase/tests/` (`npx supabase test db`).
 - **Portal de clientes:** diseñado en la base de datos desde la fase 1 (`clientes.usuario_id`,
   políticas de lectura y de apuntar peso). Pantallas: versión sencilla al final de la fase 3,
   completa en la fase 4.

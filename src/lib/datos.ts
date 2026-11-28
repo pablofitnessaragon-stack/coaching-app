@@ -10,7 +10,10 @@ import type { EstiloVida } from "./nutrition/gasto-total";
 export interface Cliente {
   id: string;
   entrenador_id: string;
+  /** Cuenta del portal enlazada a esta ficha (null si no tiene). */
   usuario_id: string | null;
+  /** El cliente solo ve sus datos si el entrenador le ha dado acceso. */
+  acceso_portal: boolean;
   nombre: string;
   email: string | null;
   telefono: string | null;

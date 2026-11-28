@@ -177,6 +177,40 @@ export async function borrarCliente(id: string, fd: FormData) {
   redirect("/clientes");
 }
 
+/* ---------- Acceso al portal del cliente ---------- */
+
+/**
+ * Enlaza la cuenta del cliente (por su email) con su ficha y le da acceso al
+ * portal. La comprobación de verdad la hace la base de datos (dar_acceso_portal).
+ */
+export async function darAccesoPortal(id: string, _: EstadoFormulario, fd: FormData): Promise<EstadoFormulario> {
+  await exigirEntrenador();
+  const email = String(fd.get("email_portal") ?? "").trim();
+  const valores = { email_portal: email };
+  if (!z.string().email().safeParse(email).success) return { valores, error: "Escribe un email válido." };
+  const supabase = await crearClienteServidor();
+  const { data, error } = await supabase.rpc("dar_acceso_portal", { p_cliente: id, p_email: email });
+  if (error) return { valores, error: "No se pudo dar acceso: " + error.message };
+  const mensaje = MENSAJE_ACCESO[String(data)];
+  if (mensaje) return { valores, error: mensaje };
+  revalidatePath(`/clientes/${id}`, "layout");
+  return { ok: true, valores };
+}
+
+const MENSAJE_ACCESO: Record<string, string> = {
+  sin_cuenta:
+    "No hay ninguna cuenta de cliente confirmada con ese email. Créala primero en Supabase (Authentication → Users → Add user, marcando «Auto Confirm User») y vuelve a intentarlo.",
+  cuenta_ocupada: "Esa cuenta ya está enlazada a la ficha de otro cliente.",
+};
+
+/** Quita el acceso al portal: el cliente deja de ver sus datos al momento. */
+export async function quitarAccesoPortal(id: string) {
+  await exigirEntrenador();
+  const supabase = await crearClienteServidor();
+  await supabase.rpc("quitar_acceso_portal", { p_cliente: id });
+  revalidatePath(`/clientes/${id}`, "layout");
+}
+
 /* ---------- Peso ---------- */
 
 const esquemaPeso = z.object({
