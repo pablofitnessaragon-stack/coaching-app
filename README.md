@@ -44,6 +44,12 @@ npm test
 Comprueban todas las fórmulas con ejemplos calculados a mano (las cuentas están en los comentarios de
 `src/lib/nutrition/__tests__/formulas.test.ts`).
 
+Las reglas de privacidad de la base de datos (qué ve cada cliente) tienen sus propios tests:
+
+```bash
+npx supabase test db
+```
+
 ## Publicarlo en internet
 
 Ver [`docs/PUESTA_EN_MARCHA.md`](docs/PUESTA_EN_MARCHA.md): Supabase (Frankfurt) + Vercel, paso a paso.

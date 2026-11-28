@@ -1,8 +1,9 @@
 import { obtenerAltaDeCliente, obtenerCliente } from "@/lib/datos";
 import ResumenAlta from "@/components/ResumenAlta";
 import FormCliente from "@/components/FormCliente";
+import FormAccesoPortal from "@/components/FormAccesoPortal";
 import { fmtFecha } from "@/components/ui";
-import { actualizarCliente, borrarCliente } from "../../acciones";
+import { actualizarCliente, borrarCliente, darAccesoPortal, quitarAccesoPortal } from "../../acciones";
 
 export const metadata = { title: "Ficha" };
 
@@ -24,6 +25,36 @@ export default async function Ficha({ params, searchParams }: PageProps<"/client
           <ResumenAlta respuestas={alta.respuestas} soloExtra />
         </details>
       )}
+
+      <section className="tarjeta space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="subtitulo">Acceso del cliente a la app</h2>
+          {c.acceso_portal ? (
+            <span className="inline-flex rounded-full bg-marca-100 px-2 py-0.5 text-xs font-semibold text-marca-700">Con acceso</span>
+          ) : (
+            <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">Sin acceso</span>
+          )}
+        </div>
+        <p className="text-sm text-slate-600">
+          {c.acceso_portal
+            ? "Puede entrar con su cuenta y ver SOLO su propio progreso, objetivos y plan. Nunca ve a otros clientes ni tus notas."
+            : c.usuario_id
+              ? "Su cuenta está enlazada, pero ahora mismo no puede ver nada. Vuelve a darle acceso cuando quieras."
+              : "Todavía no puede ver nada. Cuando quieras, crea su cuenta y dale acceso con su email."}
+        </p>
+        {c.acceso_portal ? (
+          <form action={quitarAccesoPortal.bind(null, id)}>
+            <button className="boton-sec">Quitar acceso</button>
+            <p className="ayuda mt-1">Deja de ver sus datos al momento. Sus datos no se borran.</p>
+          </form>
+        ) : (
+          <FormAccesoPortal
+            accion={darAccesoPortal.bind(null, id)}
+            emailSugerido={c.email ?? ""}
+            textoBoton={c.usuario_id ? "Volver a dar acceso" : "Dar acceso"}
+          />
+        )}
+      </section>
 
       <section className="tarjeta space-y-4">
         <h2 className="subtitulo">Privacidad y datos (RGPD)</h2>
